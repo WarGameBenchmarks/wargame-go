@@ -68,17 +68,35 @@ func (u Suit) String() string {
 	return s
 }
 
+type Card struct {
+	s Suit
+	v Value
+}
+
+func (c Card) String() string {
+	return fmt.Sprintf("%s of %s", c.v, c.s)
+}
+
 func main() {
-	vs := []Value{
+	values := []Value{
 		Two, Three, Four, 
 		Five, Six, Seven, 
 		Eight, Nine, Ten, 
 		Jack, Queen, King, Ace}
-	for _,v := range vs {
+	suits := []Suit{Clubs, Hearts, Diamonds, Spades}
+	
+	cards := [52]Card{}
+
+	i := 0
+	for _,suit := range suits {
+		for _,value := range values {
+			cards[i] = Card{suit, value}
+			i++
+		}
+	}
+
+	for _,v := range cards {
 		fmt.Println(v)
 	}
-	ss := []Suit{Clubs, Hearts, Diamonds, Spades}
-	for _,v := range ss {
-		fmt.Println(v)
-	}
+
 }
