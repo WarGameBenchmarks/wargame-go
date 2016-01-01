@@ -59,6 +59,10 @@ func TestDeckSplit(t *testing.T) {
 	}
 }
 
+/*
+	Testing Deck.shuffle is untenable. Skipped for now.
+*/
+
 func TestDeckGiveCard(t *testing.T) {
 	deck := Deck{}
 	deck.Fresh()
@@ -82,6 +86,3 @@ func TestDeckGiveCards(t *testing.T) {
 	}
 }
 
-/*
-	Testing Deck.shuffle is untenable. Skipped for now.
-*/
