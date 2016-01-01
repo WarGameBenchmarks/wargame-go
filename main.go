@@ -7,10 +7,10 @@ import (
 func main() {
 
 	full_deck := Deck{}
-	full_deck.fresh()
-	full_deck.shuffle()
+	full_deck.Fresh()
+	full_deck.Shuffle()
 
-	p1, p2 := full_deck.split()
+	p1, p2 := full_deck.Split()
 
 	fmt.Println(len(p1.cards), "cards")
 	for _,v := range p1.cards {
