@@ -1,17 +1,14 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+	"math/rand"
+)
 
 // A special type to represent card Values
 type Value int
 
-/*
-	iota will set
-		Two = 0
-		Three = 1
-		Four = 2
-	and so on
-*/
 const (
 	Two Value = iota
 	Three
@@ -77,15 +74,39 @@ func (c Card) String() string {
 	return fmt.Sprintf("%s of %s", c.v, c.s)
 }
 
-func main() {
+/*
+	Go does not have a way to implement special
+	equality and/or comparison interfaces for a struct,
+	unlike Rust.
+
+	It needs to be implemented instead.
+*/
+func (c Card) compare(o Card) int {
+	r := 0
+	switch {
+		case c.v > o.v: r = 1
+		case c.v < o.v: r = -1
+		case c.v == o.v: r = 0
+	}
+	return r
+}
+
+type Deck struct {
+	cards []Card
+}
+
+func (d Deck) fresh() Deck {
+
 	values := []Value{
 		Two, Three, Four, 
 		Five, Six, Seven, 
 		Eight, Nine, Ten, 
-		Jack, Queen, King, Ace}
+		Jack, Queen, King,
+		Ace}
 	suits := []Suit{Clubs, Hearts, Diamonds, Spades}
 	
-	cards := [52]Card{}
+	// slice, instead of an array
+	cards := make([]Card, 52)
 
 	i := 0
 	for _,suit := range suits {
@@ -94,8 +115,54 @@ func main() {
 			i++
 		}
 	}
+	return Deck{cards}
+}
 
-	for _,v := range cards {
+func (d Deck) split() (Deck,Deck) {
+	l := len(d.cards)
+	h := l / 2
+
+	part1 := d.cards[:h]
+	part2 := d.cards[h:]
+
+	return Deck{part1}, Deck{part2}
+}
+
+func (d Deck) shuffle() {
+	cards := d.cards
+
+	for i := range cards {
+		j := rand.Intn(i+1)
+		cards[i], cards[j] = cards[j], cards[i]
+	}
+
+	d.cards = cards
+}
+
+/*
+	Go is weird; the PRNG is not seeded automatically;
+	To seed it, `init` is automatically called before main.
+	Without this, the decks will always be shuffled in the same way.
+*/
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
+
+func main() {
+
+	empty := Deck{}
+	full_deck := empty.fresh()
+	full_deck.shuffle()
+
+	p1, p2 := full_deck.split()
+
+	fmt.Println(len(p1.cards), "cards")
+	for _,v := range p1.cards {
+		fmt.Println(v)
+	}
+	fmt.Println(len(p2.cards), "cards")
+	fmt.Println("========")
+	for _,v := range p2.cards {
 		fmt.Println(v)
 	}
 
