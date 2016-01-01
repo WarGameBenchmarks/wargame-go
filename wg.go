@@ -95,8 +95,7 @@ type Deck struct {
 	cards []Card
 }
 
-func (d Deck) fresh() Deck {
-
+func (d *Deck) fresh() {
 	values := []Value{
 		Two, Three, Four, 
 		Five, Six, Seven, 
@@ -106,19 +105,18 @@ func (d Deck) fresh() Deck {
 	suits := []Suit{Clubs, Hearts, Diamonds, Spades}
 	
 	// slice, instead of an array
-	cards := make([]Card, 52)
+	d.cards = make([]Card, 52)
 
 	i := 0
 	for _,suit := range suits {
 		for _,value := range values {
-			cards[i] = Card{suit, value}
+			d.cards[i] = Card{suit, value}
 			i++
 		}
 	}
-	return Deck{cards}
 }
 
-func (d Deck) split() (Deck,Deck) {
+func (d *Deck) split() (Deck,Deck) {
 	l := len(d.cards)
 	h := l / 2
 
@@ -128,7 +126,7 @@ func (d Deck) split() (Deck,Deck) {
 	return Deck{part1}, Deck{part2}
 }
 
-func (d Deck) shuffle() {
+func (d *Deck) shuffle() {
 	cards := d.cards
 
 	for i := range cards {

@@ -6,8 +6,8 @@ import (
 
 func main() {
 
-	empty := Deck{}
-	full_deck := empty.fresh()
+	full_deck := Deck{}
+	full_deck.fresh()
 	full_deck.shuffle()
 
 	p1, p2 := full_deck.split()
