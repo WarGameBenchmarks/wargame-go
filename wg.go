@@ -156,6 +156,10 @@ func (d *Deck) Shuffle() {
 	d.cards = cards
 }
 
+func (d *Deck) GetCard() Card {
+	return d.cards[0]
+}
+
 // GiveCard will give a card from this deck to another deck.
 func (d *Deck) GiveCard(other *Deck) {
 	// make a local copy of the deck's cards
@@ -178,7 +182,8 @@ func (d *Deck) GiveCards(other *Deck) {
 	// shuffle will randomize the deck before its contents
 	// are given to the other deck
 	// TODO: this is a direct port; but feels like poor taste now
-	d.Shuffle()
+	// d.Shuffle()
+	// Disabled for now
 
 	// because `GiveCard` alters the length,
 	// len(...) will recalculate incorrectly
