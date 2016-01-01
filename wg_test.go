@@ -16,7 +16,7 @@ func TestCardEquality(t *testing.T) {
 	for _,v := range table {
 		a := v[0]
 		b := v[1]
-		if a.compare(b) != 0 {
+		if a.Compare(b) != 0 {
 			t.Error("Cards are not equal")
 		}		
 	}
@@ -33,7 +33,7 @@ func TestCardNotEqual(t *testing.T) {
 	for _,v := range table {
 		a := v[0]
 		b := v[1]
-		if a.compare(b) == 0 {
+		if a.Compare(b) == 0 {
 			t.Error("Cards are equal")
 		}		
 	}	
@@ -41,7 +41,7 @@ func TestCardNotEqual(t *testing.T) {
 
 func TestDeckFresh(t *testing.T) {
 	deck := Deck{}
-	deck.fresh()
+	deck.Fresh()
 
 	if len(deck.cards) != 52 {
 		t.Error(fmt.Sprintf("Deck contains %d cards", len(deck.cards)))
@@ -50,13 +50,38 @@ func TestDeckFresh(t *testing.T) {
 
 func TestDeckSplit(t *testing.T) {
 	deck := Deck{}
-	deck.fresh()
+	deck.Fresh()
 
-	p1, p2 := deck.split()
+	p1, p2 := deck.Split()
 
 	if len(p1.cards) != 26 || len(p2.cards) != 26 {
 		t.Error(fmt.Sprintf("Split decks contains %d and %d cards", len(p1.cards), len(p2.cards)))
 	}
 }
 
-// Not attempting to test shuffle?
+func TestDeckGiveCard(t *testing.T) {
+	deck := Deck{}
+	deck.Fresh()
+	p1, p2 := deck.Split()
+
+	// notice that &p2 implies that this is a pointer
+	p1.GiveCard(&p2)
+	if len(p1.cards) != 25 || len(p2.cards) != 27 {
+		t.Error(fmt.Sprintf("Split decks contains %d and %d cards", len(p1.cards), len(p2.cards)))
+	}
+}
+
+func TestDeckGiveCards(t *testing.T) {
+	deck := Deck{}
+	deck.Fresh()
+	p1, p2 := deck.Split()
+	
+	p1.GiveCards(&p2)
+	if len(p1.cards) != 0 || len(p2.cards) != 52 {
+		t.Error(fmt.Sprintf("Split decks contains %d and %d cards", len(p1.cards), len(p2.cards)))
+	}
+}
+
+/*
+	Testing Deck.shuffle is untenable. Skipped for now.
+*/
