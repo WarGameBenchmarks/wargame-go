@@ -2,12 +2,15 @@ package main
 
 import (
 	"fmt"
+	"runtime"
 )
 
 const DEVELOPMENT = false
 
 func main() {
 
+	nCPU := runtime.NumCPU()
+	runtime.GOMAXPROCS(nCPU)
 	
 	if DEVELOPMENT == true {
 		fmt.Println("WarGame Go")
