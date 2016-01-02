@@ -3,19 +3,20 @@ package main
 import (
 	"fmt"
 	"time"
+	"math/rand"
 )
 
 func Benchmark() {
-
-	threads := 4
 
 	progress := make(chan int)
 
 	for i := 0; i < threads; i++ {
 
 		go func() {
+			source := rand.NewSource(time.Now().UnixNano())
+			generator := rand.New(source)
 			for true {
-				Game()
+				Game(generator)
 				progress <- 1
 			}
 		}()
