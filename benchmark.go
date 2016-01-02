@@ -7,11 +7,11 @@ import (
 
 func Benchmark() {
 
+	threads := 4
+
 	progress := make(chan int)
 
-	parallel_games := 4
-
-	for i := 0; i < parallel_games; i++ {
+	for i := 0; i < threads; i++ {
 
 		go func() {
 			for true {
