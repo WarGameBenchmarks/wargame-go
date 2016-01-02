@@ -16,6 +16,6 @@ func main() {
 		fmt.Println("WarGame Go")
 	}
 
-	Game()
+	Benchmark()
 
 }
