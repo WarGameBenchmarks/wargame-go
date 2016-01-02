@@ -63,6 +63,24 @@ func TestDeckSplit(t *testing.T) {
 	Testing Deck.shuffle is untenable. Skipped for now.
 */
 
+func TestDeckGetCard(t *testing.T) {
+	deck := Deck{}
+	deck.Fresh()
+
+	p1, p2 := deck.Split()
+
+	c1, c2 := p1.GetCard(), p2.GetCard()
+
+	// to quiet the compiler for not using these in the test
+	if true {
+		c1, c2 = c2, c1
+	}
+
+	if len(p1.cards) != 26 || len(p2.cards) != 26 {
+		t.Error(fmt.Sprintf("Split decks contains %d and %d cards", len(p1.cards), len(p2.cards)))
+	}
+}
+
 func TestDeckGiveCard(t *testing.T) {
 	deck := Deck{}
 	deck.Fresh()
