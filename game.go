@@ -25,7 +25,7 @@ func Game(generator *rand.Rand) {
 		player1.GiveCard(winner)
 		player2.GiveCard(winner)
 
-		logger.Printf("%s vs %s\n", c1, c2)
+		//logger.Printf("%s vs %s\n", c1, c2)
 
 		if c1.Compare(c2) == 0 {
 			wars := 0
@@ -38,7 +38,7 @@ func Game(generator *rand.Rand) {
 
 				wars += 1
 
-				logger.Printf("War %d\n", wars)
+				//logger.Printf("War %d\n", wars)
 
 				for i := 0; i < 3; i++ {
 					player1.GiveCard(winner)
@@ -50,14 +50,12 @@ func Game(generator *rand.Rand) {
 				player1.GiveCard(winner)
 				player2.GiveCard(winner)
 
-				logger.Printf("%s vs %s\n", c1, c2)
+				//logger.Printf("%s vs %s\n", c1, c2)
 
 				if c1.Compare(c2) > 0 {
 					winner.GiveCards(player1)
-					logger.Printf("W: P1 - %d cards\n", len(player1.cards))
 				} else if c1.Compare(c2) < 0 {
 					winner.GiveCards(player2)
-					logger.Printf("W: P2 - %d cards\n", len(player2.cards))
 				} else {
 					// another war
 				}
@@ -67,15 +65,13 @@ func Game(generator *rand.Rand) {
 		} else if c1.Compare(c2) > 0 {
 			winner.Shuffle()
 			winner.GiveCards(player1)
-			logger.Printf("P1 - %d cards\n", len(player1.cards))
 		} else if c1.Compare(c2) < 0 {
 			winner.Shuffle()
 			winner.GiveCards(player2)
-			logger.Printf("P2 - %d cards\n", len(player2.cards))
 		}
 
 	}
 
-	logger.Printf("P1 (%d) vs P2 (%d) in %d turns\n", len(player1.cards), len(player2.cards), turns)
+	//logger.Printf("P1 (%d) vs P2 (%d) in %d turns\n", len(player1.cards), len(player2.cards), turns)
 
 }

@@ -10,6 +10,8 @@ func Benchmark() {
 
 	progress := make(chan int)
 
+	threads := 4
+
 	for i := 0; i < threads; i++ {
 
 		go func() {
