@@ -15,7 +15,7 @@ func Benchmark() {
 
 	create_threads(threads, &progress_channels)
 
-	samples := make([]float64, 12000)
+	samples := make([]float64, 0, 12000)
 
 	phase := 1
 
@@ -25,7 +25,9 @@ func Benchmark() {
 	current_time := time.Now().UnixNano()
 
 	prime_time := int64(10000000000)
-	sample_time := int64(60000000000)
+	// sample_time := int64(60000000000)
+	sample_time := int64(10000000000)
+	end_time := prime_time + sample_time
 
 	display_frequency := int64(50000000)
 	sample_frequency := int64(5000000)
@@ -42,7 +44,8 @@ func Benchmark() {
 	speed_v := 0.0
 	rate := 0.0
 
-	maximum_speed := float64(0)
+	var maximum_speed float64
+	var minimum_speed float64
 	mean := 0.0
 	stdev := 0.0
 	cov := 0.0
@@ -61,21 +64,29 @@ func Benchmark() {
 
 		if phase == 1 && elapsed_time >= prime_time {
 			phase = 2
+
+			maximum_speed = speed
+			minimum_speed = speed
+
 		} else if phase == 2 {
 
 			if maximum_speed < speed {
 				maximum_speed = speed
 			}
 
-			if elapsed_time >= sample_time {
+			if minimum_speed > speed {
+				minimum_speed = speed
+			}
+
+			if elapsed_time >= end_time {
 				break monitor
 			}
 
 		}
 
-		if (current_time - last_sample_time) > sample_frequency {
+		if phase == 2 && (current_time - last_sample_time) > sample_frequency {
 			last_sample_time = current_time
-			samples = append(samples, speed_v)
+			samples = append(samples, speed)
 		}
 
 		if (current_time - last_display_time) > display_frequency {
@@ -89,8 +100,8 @@ func Benchmark() {
 				fmt.Printf("\r%d. priming | et = %ds; g = %d; s = %.5f g/ms; \t",
 				phase, elapsed_time / ns, total_games, speed_v)
 			} else if phase == 2 {
-				fmt.Printf("\r%d. sampling | et = %ds; g = %d; s = %.5f g/ms; t = %d; cov = %.2f%%; \t",
-				phase, elapsed_time / ns, total_games, speed_v, len(samples), float64((1.0/cov)*100.0))				
+				fmt.Printf("\r%d. sampling | et = %ds; g = %d; s = %.5f g/ms; t = %d; \t",
+				phase, elapsed_time / ns, total_games, speed_v, len(samples))				
 			}
 			
 		}
@@ -106,17 +117,28 @@ func Benchmark() {
 	fmt.Println("\n---\n")
 
 	fmt.Printf("Samples: %d collected\n", len(samples))
-	fmt.Printf("Mean: %.5f\n", mean)
-	fmt.Printf("Standard Deviation: %.5f\n", stdev)
+	fmt.Printf("Mean: %.5f\n", mean * float64(ms))
+	fmt.Printf("Standard Deviation: %.5f\n", stdev * float64(ms))
 	fmt.Printf("Coefficient of Variation: %.5f\n", cov)
-	fmt.Printf("Maximum Speed: %.5f g/ms\n", maximum_speed * float64(ms))
 
-	fmt.Printf("\n---\n")
+	fmt.Printf("Minimum Speed: %.5f g/ms\n", minimum_speed * float64(ms))
+	fmt.Printf("Maximum Speed: %.5f g/ms\n", maximum_speed * float64(ms))
+	
+	fmt.Printf("Distribution:\t < %.2f | %.2f | %.2f >\n", (mean-stdev)*float64(ms), speed_v, (mean+stdev)*float64(ms))
+	fmt.Printf("Min-Max:\t < %.2f | %.2f | %.2f >\n", math.Abs(minimum_speed-speed)*float64(ms), speed_v, math.Abs(maximum_speed-speed)*float64(ms))
+
+	fmt.Printf("95%% CI:\t < %.2f | %.2f | %.2f >", 
+		(mean - 1.960 * (stdev / math.Sqrt(float64(len(samples))))) * float64(ms),
+		speed_v,
+		(mean + 1.960 * (stdev / math.Sqrt(float64(len(samples))))) * float64(ms))
+
+
+	fmt.Println("\n---\n")
 	
 	fmt.Printf("Threads: %d\n", threads)
 	fmt.Printf("Speed: %.5f\n", speed_v)
 	fmt.Printf("Total Games: %d\n", total_games)
-	fmt.Printf("Elapsed Time: %d nanoseconds; %.2f seconds\n",
+	fmt.Printf("Elapsed Time: %d nanoseconds; %.0f seconds\n",
 		elapsed_time, float64(elapsed_time / ns))
 
 	fmt.Printf("\nScore: %d\n", math_round(speed_v))
