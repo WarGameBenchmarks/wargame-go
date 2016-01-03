@@ -5,6 +5,7 @@ import (
 	"time"
 	"math"
 	"math/rand"
+	"strings"
 )
 
 func Benchmark() {
@@ -25,8 +26,10 @@ func Benchmark() {
 	current_time := time.Now().UnixNano()
 
 	prime_time := int64(10000000000)
-	// sample_time := int64(60000000000)
-	sample_time := int64(10000000000)
+	// prime_time := int64(5000000000)
+	sample_time := int64(60000000000)
+	// sample_time := int64(10000000000)
+	// sample_time := int64(5000000000)
 	end_time := prime_time + sample_time
 
 	display_frequency := int64(50000000)
@@ -79,9 +82,11 @@ func Benchmark() {
 			}
 
 			if elapsed_time >= end_time {
-				break monitor
+				phase = 3
 			}
 
+		} else if phase == 4 {
+			break monitor
 		}
 
 		if phase == 2 && (current_time - last_sample_time) > sample_frequency {
@@ -102,17 +107,44 @@ func Benchmark() {
 			} else if phase == 2 {
 				fmt.Printf("\r%d. sampling | et = %ds; g = %d; s = %.5f g/ms; t = %d; \t",
 				phase, elapsed_time / ns, total_games, speed_v, len(samples))				
+			} else if phase == 3 {
+				phase = 4
+				fmt.Printf("\r%d. done | et = %ds; g = %d; s = %.5f g/ms; t = %d; \t",
+				phase, elapsed_time / ns, total_games, speed_v, len(samples))	
 			}
 			
 		}
 
 	}
 
-
 	// final statistics
 	mean = get_mean(samples)
 	stdev = get_standard_deviation(samples, mean)
 	cov = get_coefficient_of_variation(mean, stdev)
+
+	one_sigma_lower := (mean-stdev)*float64(ms)
+	one_sigma_upper := (mean+stdev)*float64(ms)
+
+	const t_score = 3.291
+	const one_percent = .01
+
+	nfci_lower := (mean - (t_score * (stdev / math.Sqrt(float64(len(samples)))))) * float64(ms)
+	nfci_upper := (mean + (t_score * (stdev / math.Sqrt(float64(len(samples)))))) * float64(ms)
+
+	passes := make([]string, 0, 3)
+
+	if cov < one_percent {
+		passes = append(passes, "1%cov")
+	}
+
+	if one_sigma_lower < speed_v && speed_v < one_sigma_upper {
+		passes = append(passes, "1σ")
+	}
+
+	if nfci_lower < speed_v && speed_v < nfci_upper {
+		passes = append(passes, "95%")
+	}
+
 	
 	fmt.Println("\n---\n")
 
@@ -121,16 +153,11 @@ func Benchmark() {
 	fmt.Printf("Standard Deviation: %.5f\n", stdev * float64(ms))
 	fmt.Printf("Coefficient of Variation: %.5f\n", cov)
 
-	fmt.Printf("Minimum Speed: %.5f g/ms\n", minimum_speed * float64(ms))
-	fmt.Printf("Maximum Speed: %.5f g/ms\n", maximum_speed * float64(ms))
+	fmt.Printf("Min-Max:\t < %.5f - %.5f >\n", minimum_speed*float64(ms), maximum_speed*float64(ms))
 	
-	fmt.Printf("Distribution:\t < %.5f | %.5f | %.5f >\n", (mean-stdev)*float64(ms), speed_v, (mean+stdev)*float64(ms))
-	fmt.Printf("Min-Max:\t < %.5f | %.5f | %.5f >\n", math.Abs(minimum_speed-speed)*float64(ms), speed_v, math.Abs(maximum_speed-speed)*float64(ms))
+	fmt.Printf("1-σ:\t\t < %.5f - %.5f >\n", one_sigma_lower, one_sigma_upper)
 
-	fmt.Printf("95%% CI:\t\t < %.5f - %.5f >", 
-		(mean - 1.960 * (stdev / math.Sqrt(float64(len(samples))))) * float64(ms),
-		speed_v,
-		(mean + 1.960 * (stdev / math.Sqrt(float64(len(samples))))) * float64(ms))
+	fmt.Printf("95%% CI:\t\t < %.5f - %.5f >", nfci_lower, nfci_upper)
 
 
 	fmt.Println("\n---\n")
@@ -142,7 +169,21 @@ func Benchmark() {
 		elapsed_time, float64(elapsed_time / ns))
 
 	fmt.Printf("\nScore: %d\n", math_round(speed_v))
+	fmt.Printf("\nRank: %s\n", rank(passes))
 
+}
+
+func rank(passes []string) string {
+	v := len(passes)
+	letter := ""
+	switch v {
+		case 3: letter = "A"
+		case 2: letter = "B"
+		case 1: letter = "C"
+		default: letter = "D"
+	}
+	reason := strings.Join(passes[:], ", ")
+	return letter + " [" + reason + "]"
 }
 
 func math_round(f float64) int64 {
@@ -201,5 +242,5 @@ func get_standard_deviation(samples []float64, mean float64) float64 {
 }
 
 func get_coefficient_of_variation(mean float64, stdev float64) float64 {
-	return (stdev / mean) * float64(100)
+	return stdev / mean
 }
