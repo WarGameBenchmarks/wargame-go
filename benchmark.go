@@ -8,9 +8,9 @@ import (
 
 func Benchmark() {
 
-	progress := make(chan int)
-
 	threads := 4
+
+	progress := make(chan int, 4096)
 
 	for i := 0; i < threads; i++ {
 
