@@ -25,14 +25,17 @@ func Benchmark() {
 	start_time := time.Now().UnixNano()
 	current_time := time.Now().UnixNano()
 
+	// production values
 	prime_time := int64(10000000000)
-	// prime_time := int64(5000000000)
 	sample_time := int64(60000000000)
-	// sample_time := int64(10000000000)
+
+	// very short values for development
+	// prime_time := int64(5000000000)
 	// sample_time := int64(5000000000)
+	
 	end_time := prime_time + sample_time
 
-	display_frequency := int64(50000000)
+	display_frequency := int64(66670000)
 	sample_frequency := int64(5000000)
 
 	last_display_time := int64(0)
