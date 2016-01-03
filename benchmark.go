@@ -8,22 +8,11 @@ import (
 
 func Benchmark() {
 
-	threads := 4
+	threads := 8
 
-	progress := make(chan int, 4096)
+	progress_channels := make([](chan int), threads)
 
-	for i := 0; i < threads; i++ {
-
-		go func() {
-			source := rand.NewSource(time.Now().UnixNano())
-			generator := rand.New(source)
-			for true {
-				Game(generator)
-				progress <- 1
-			}
-		}()
-
-	}
+	create_threads(threads, &progress_channels)
 
 	// samples := make([]float64, 10000)
 
@@ -62,13 +51,8 @@ func Benchmark() {
 	// stdev := 0.0
 	// cov := 0.0
 
-	monitor: for true {
-		select {
-			case p := <-progress:
-				total_games += int64(p)
-			default:
-				// do nothing!
-		}
+	monitor: for true {		
+		total_games += int64(collect_progress(&progress_channels))
 
 		current_time = time.Now().UnixNano()
 		elapsed_time = current_time - start_time
@@ -107,3 +91,33 @@ func Benchmark() {
 
 }
 
+func create_threads(threads int, channels *[](chan int)) {
+	for i := 0; i < threads; i++ {
+
+		progress := make(chan int, threads * 1024)
+		(*channels)[i] = progress
+
+		go func() {
+			source := rand.NewSource(time.Now().UnixNano())
+			generator := rand.New(source)
+			for true {
+				Game(generator)
+				progress <- 1
+			}
+		}()
+
+	}
+}
+
+func collect_progress(channels *[](chan int)) int {
+	r := 0	
+	for _,v := range *channels {
+		select {
+			case p := <-v:
+				r += p
+			default:
+				// do nothing!
+		}
+	}
+	return r
+}
