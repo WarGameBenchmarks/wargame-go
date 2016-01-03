@@ -124,10 +124,10 @@ func Benchmark() {
 	fmt.Printf("Minimum Speed: %.5f g/ms\n", minimum_speed * float64(ms))
 	fmt.Printf("Maximum Speed: %.5f g/ms\n", maximum_speed * float64(ms))
 	
-	fmt.Printf("Distribution:\t < %.2f | %.2f | %.2f >\n", (mean-stdev)*float64(ms), speed_v, (mean+stdev)*float64(ms))
-	fmt.Printf("Min-Max:\t < %.2f | %.2f | %.2f >\n", math.Abs(minimum_speed-speed)*float64(ms), speed_v, math.Abs(maximum_speed-speed)*float64(ms))
+	fmt.Printf("Distribution:\t < %.5f | %.5f | %.5f >\n", (mean-stdev)*float64(ms), speed_v, (mean+stdev)*float64(ms))
+	fmt.Printf("Min-Max:\t < %.5f | %.5f | %.5f >\n", math.Abs(minimum_speed-speed)*float64(ms), speed_v, math.Abs(maximum_speed-speed)*float64(ms))
 
-	fmt.Printf("95%% CI:\t < %.2f | %.2f | %.2f >", 
+	fmt.Printf("95%% CI:\t\t < %.5f - %.5f >", 
 		(mean - 1.960 * (stdev / math.Sqrt(float64(len(samples))))) * float64(ms),
 		speed_v,
 		(mean + 1.960 * (stdev / math.Sqrt(float64(len(samples))))) * float64(ms))
