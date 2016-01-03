@@ -8,9 +8,7 @@ import (
 	"strings"
 )
 
-func Benchmark() {
-
-	threads := 8
+func Benchmark(threads int) {
 
 	progress_channels := make([](chan int), threads)
 
