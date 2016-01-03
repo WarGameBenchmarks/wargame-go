@@ -97,10 +97,6 @@ func Benchmark() {
 		if (current_time - last_display_time) > display_frequency {
 			last_display_time = current_time
 
-			mean = get_mean(samples)
-			stdev = get_standard_deviation(samples, mean)
-			cov = get_coefficient_of_variation(mean, stdev)
-			
 			if phase == 1 {
 				fmt.Printf("\r%d. priming | et = %ds; g = %d; s = %.5f g/ms; \t",
 				phase, elapsed_time / ns, total_games, speed_v)
@@ -227,7 +223,7 @@ func collect_progress(channels *[](chan int)) int {
 			case p := <-v:
 				r += p
 			default:
-				// do nothing!
+				// no data available
 		}
 	}
 	return r
@@ -241,7 +237,6 @@ func get_mean(samples []float64) float64 {
 	var mean float64 = total / float64(len(samples))
 	return mean
 }
-
 
 // TODO: implement `online_variance` algorithm
 func get_standard_deviation(samples []float64, mean float64) float64 {
