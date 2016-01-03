@@ -121,8 +121,10 @@ func Benchmark() {
 	stdev = get_standard_deviation(samples, mean)
 	cov = get_coefficient_of_variation(mean, stdev)
 
+	// the delta of the max-min speeds
 	min_max_delta := maximum_speed - minimum_speed
 
+	// one_sigma is 1 standard deviation away from the mean
 	one_sigma_lower := (mean-stdev)*float64(ms)
 	one_sigma_upper := (mean+stdev)*float64(ms)
 	one_sigma_delta := one_sigma_upper - one_sigma_lower
@@ -130,26 +132,32 @@ func Benchmark() {
 	const t_score = 3.291 // 99.9%
 	const one_percent = .01
 
+	// 99.9% confidence interval; how likely it is that the true mean lies within
 	nfci_lower := (mean - (t_score * (stdev / math.Sqrt(float64(len(samples)))))) * float64(ms)
 	nfci_upper := (mean + (t_score * (stdev / math.Sqrt(float64(len(samples)))))) * float64(ms)
 	nfci_delta := nfci_upper - nfci_lower
 
+	// controversial section! points are given
+	// based on passing basic statistical testing criteria
 	points := make([]string, 0, 3)
 
+	// pass: COV < 1%; stdev / mean
 	if cov < one_percent {
 		points = append(points, "1%cov")
 	}
 
+	// the final speed is within 1 stdev
 	if one_sigma_lower < speed_v && speed_v < one_sigma_upper {
 		points = append(points, "1σ")
 	}
 
+	// the final speed is near the true mean
 	if nfci_lower < speed_v && speed_v < nfci_upper {
 		points = append(points, "99.9%CI")
 	}
 
 	
-	fmt.Println("\n---\n")
+	fmt.Printf("\n---\n")
 
 	fmt.Printf("Samples: %d collected\n", len(samples))
 	fmt.Printf("Mean: %.5f\n", mean * float64(ms))
@@ -163,7 +171,7 @@ func Benchmark() {
 	fmt.Printf("99.9%% CI:\t < %.5f - %.5f > Δ %.5f", nfci_lower, nfci_upper, nfci_delta)
 
 
-	fmt.Println("\n---\n")
+	fmt.Printf("\n---\n")
 	
 	fmt.Printf("Threads: %d\n", threads)
 	fmt.Printf("Speed: %.5f\n", speed_v)
@@ -171,22 +179,28 @@ func Benchmark() {
 	fmt.Printf("Elapsed Time: %.0f seconds\n", float64(elapsed_time / ns))
 
 	fmt.Printf("Rank Passes: %s\n", rank_reason(points))
-	fmt.Printf("\nScore: %d %s\n", math_round(speed_v), rank(points))
+	fmt.Printf("\nScore: %d %s\n", math_round(speed_v), rank_letter(points))
 
 }
 
-func rank(passes []string) string {
+// Rank letter accepts a list of passed tests that
+// define certain statistical qualities.
+// For each successful pass, a better letter rank is returned.
+func rank_letter(passes []string) string {
 	v := len(passes)
 	letter := ""
 	switch v {
 		case 3: letter = "A"
 		case 2: letter = "B"
 		case 1: letter = "C"
-		default: letter = "D"
+		case 0: letter = "D"
+		default: letter = "X"
 	}
 	return letter
 }
 
+// Rank reason concatenates a string, or reports none.
+// The rank reasons are set in a string slice.
 func rank_reason(passes []string) string {
 	reason := ""
 	if len(passes) == 0 {
@@ -197,10 +211,15 @@ func rank_reason(passes []string) string {
 	return reason
 }
 
+// Math round attempts to round a float to an integer.
 func math_round(f float64) int64 {
 	return int64(math.Floor(f + .5))
 }
 
+// Create threads accepts a number of threads and a channel pointer,
+// which will be populated with channels for each respective thread
+// spun up. Each thread runs a game loop, and upon completion of each game,
+// the thread sends through the progress channel.
 func create_threads(threads int, channels *[](chan int)) {
 	for i := 0; i < threads; i++ {
 
@@ -219,6 +238,8 @@ func create_threads(threads int, channels *[](chan int)) {
 	}
 }
 
+// Collect progress accesses each channel and listens, in a non-blocking fashion,
+// for any data passed back to it that indicates progress has been made.
 func collect_progress(channels *[](chan int)) int {
 	r := 0	
 	for _,v := range *channels {
@@ -232,6 +253,7 @@ func collect_progress(channels *[](chan int)) int {
 	return r
 }
 
+// Get mean calculates the mean based on the given samples.
 func get_mean(samples []float64) float64 {
 	var total float64 = 0
 	for _, v := range samples {
@@ -241,6 +263,7 @@ func get_mean(samples []float64) float64 {
 	return mean
 }
 
+// Get standard deviation calculates the stdev based on the given samples and the mean.
 // TODO: implement `online_variance` algorithm
 func get_standard_deviation(samples []float64, mean float64) float64 {
 	var total float64 = 0
@@ -251,6 +274,7 @@ func get_standard_deviation(samples []float64, mean float64) float64 {
 	return stdev
 }
 
+// Get coefficient of variation calculations the standard deviation to mean ratio.
 func get_coefficient_of_variation(mean float64, stdev float64) float64 {
 	return stdev / mean
 }
