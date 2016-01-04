@@ -87,7 +87,7 @@ func TestDeckGiveCard(t *testing.T) {
 	p1, p2 := deck.Split()
 
 	// notice that &p2 implies that this is a pointer
-	p1.GiveCard(&p2)
+	p1.GiveCard(p2)
 	if len(p1.cards) != 25 || len(p2.cards) != 27 {
 		t.Error(fmt.Sprintf("Split decks contains %d and %d cards", len(p1.cards), len(p2.cards)))
 	}
@@ -98,7 +98,7 @@ func TestDeckGiveCards(t *testing.T) {
 	deck.Fresh()
 	p1, p2 := deck.Split()
 	
-	p1.GiveCards(&p2)
+	p1.GiveCards(p2)
 	if len(p1.cards) != 0 || len(p2.cards) != 52 {
 		t.Error(fmt.Sprintf("Split decks contains %d and %d cards", len(p1.cards), len(p2.cards)))
 	}
