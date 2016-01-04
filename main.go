@@ -17,10 +17,12 @@ func main() {
 	threads := 1
 
 	if len(arguments) >= 1 {
+		fmt.Println(arguments[0])
 		i, err := strconv.Atoi(arguments[0])
 		if err != nil {
-			threads = i
-		}
+			fmt.Println(err)
+		} 
+		threads = i
 	}
 
 	fmt.Println("WarGame Go")
