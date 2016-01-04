@@ -8,6 +8,8 @@ import (
 	"strings"
 )
 
+// Benchmark accepts a number of threads,
+// and will eventually benchmark.
 func Benchmark(threads int) {
 
 	progress_channels := make([](chan int), threads)
@@ -64,7 +66,6 @@ func Benchmark(threads int) {
 
 		speed = 1.0 / rate
 		speed_v = speed * float64(ms)
-
 
 		if phase == 1 && elapsed_time >= prime_time {
 			phase = 2
