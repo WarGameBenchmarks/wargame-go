@@ -17,7 +17,7 @@ func main() {
 	threads := 1
 
 	if len(arguments) >= 1 {
-		i, err := strconv.Atoi(arguments[1])
+		i, err := strconv.Atoi(arguments[0])
 		if err != nil {
 			threads = i
 		}
