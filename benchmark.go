@@ -150,16 +150,17 @@ func Benchmark(threads int) {
 	// pass: COV < 1%; stdev / mean
 	criteria["1% COV"] = cov < one_percent
 
-	// the final speed is within 1 stdev
+	// pass: the final speed is within 1 stdev
 	criteria["± 1σ"] = one_sigma_lower < speed_v && speed_v < one_sigma_upper
 
-	// the final speed is near the true mean
+	// pass: the final speed is near the true mean; within the confidence interval
 	criteria["99.9% CI"] = ci_lower < speed_v && speed_v < ci_upper
 
 	// only printing below
 	// 1. raw statisitics
 	// 2. summary of the benchmark
-	// 3. rank and score
+	// 3. rank
+	// 4. score
 
 	fmt.Printf("\n---\n")
 
@@ -207,6 +208,8 @@ func rank_letter(criteria map[string]bool) string {
 	return letter
 }
 
+// Rank passes totals the number of true keys in the given criteria array
+// and returns that as an integer.
 func rank_passes(criteria map[string]bool) int {
 	r := 0
 	for _, v := range criteria {
