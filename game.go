@@ -47,8 +47,10 @@ func Game(generator *rand.Rand) {
 				player2.GiveCard(winner)
 
 				if c1.Compare(c2) > 0 {
+					winner.Shuffle()
 					winner.GiveCards(player1)
 				} else if c1.Compare(c2) < 0 {
+					winner.Shuffle()
 					winner.GiveCards(player2)
 				} else {
 					// another war
