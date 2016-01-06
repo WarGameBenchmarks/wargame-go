@@ -20,13 +20,13 @@ func Benchmark(threads int) {
 	const ns int64 = 1000000000
 
 	// 10 seconds
-	// const prime_time int64 = 	10000000000
+	const prime_time int64 = 	10000000000
 	// 60 seconds
-	// const sample_time int64 = 60000000000
+	const sample_time int64 = 60000000000
 
 	// development times
-	const prime_time int64 = 	5000000000
-	const sample_time int64 = 5000000000
+	// const prime_time int64 = 	5000000000
+	// const sample_time int64 = 5000000000
 
 	// 1/15 of a second
 	const display_frequency int64 = ns/15
@@ -109,11 +109,17 @@ func Benchmark(threads int) {
 				phase, elapsed_time / ns, total_games, speed_v, len(samples))
 			} else if phase == 3 {
 				phase = 4
-				fmt.Printf("\r%d. done | et = %ds; g = %d; s = %.5f g/ms; t = %d; \t",
-				phase, elapsed_time / ns, total_games, speed_v, len(samples))
+				// intentionally blank line
+				fmt.Printf("\r%d. done                                                                 \t",
+				phase)
 			}
 		}
 	}
+
+	// constants
+	const t_score = 3.291 // 99.9% t-score
+	const one_percent = .01 // 1%
+	const ten_percent = .1 // 10%
 
 	// final statistics
 	var mean float64 = get_mean(samples)
@@ -122,14 +128,12 @@ func Benchmark(threads int) {
 
 	// the delta of the max-min speeds
 	var min_max_delta float64 = maximum_speed - minimum_speed
+	var max_ten_percent float64 = maximum_speed * ten_percent
 
 	// one_sigma is 1 standard deviation away from the mean
 	var one_sigma_lower float64 = (mean-stdev)*float64(ms)
 	var one_sigma_upper float64 = (mean+stdev)*float64(ms)
 	var one_sigma_delta float64 = one_sigma_upper - one_sigma_lower
-
-	const t_score = 3.291 // 99.9% t-score
-	const one_percent = .01 // 1%
 
 	// 99.9% confidence interval; how likely it is that the true mean lies within
 	var ci_lower float64 = (mean - (t_score * (stdev / math.Sqrt(float64(len(samples)))))) * float64(ms)
@@ -140,11 +144,14 @@ func Benchmark(threads int) {
 	// based on passing basic statistical testing criteria
 	var criteria map[string]bool = make(map[string]bool)
 
+	// pass: is the delta smaller than 10% of the max?
+	criteria["10% Δ Min-Max"] = min_max_delta < max_ten_percent
+
 	// pass: COV < 1%; stdev / mean
 	criteria["1% COV"] = cov < one_percent
 
 	// the final speed is within 1 stdev
-	criteria["±1σ"] = one_sigma_lower < speed_v && speed_v < one_sigma_upper
+	criteria["± 1σ"] = one_sigma_lower < speed_v && speed_v < one_sigma_upper
 
 	// the final speed is near the true mean
 	criteria["99.9% CI"] = ci_lower < speed_v && speed_v < ci_upper
@@ -190,6 +197,7 @@ func rank_letter(criteria map[string]bool) string {
 	v := rank_passes(criteria)
 	letter := ""
 	switch v {
+		case 4: letter = "A+"
 		case 3: letter = "A"
 		case 2: letter = "B"
 		case 1: letter = "C"
@@ -287,7 +295,7 @@ func get_standard_deviation(samples []float64, mean float64) float64 {
 	for _, v := range samples {
 		total += math.Pow(v - mean, 2)
 	}
-	var stdev float64 = math.Sqrt(total / float64(len(samples)))
+	var stdev float64 = math.Sqrt(total / float64(len(samples) - 1))
 	return stdev
 }
 
