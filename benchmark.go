@@ -175,7 +175,7 @@ func Benchmark(threads int) {
 	fmt.Printf("---\n")
 
 	fmt.Printf("Threads: %d\n", threads)
-	fmt.Printf("Speed: %.5f\n", speed_v)
+	fmt.Printf("Speed: %.5f g/ms\n", speed_v)
 	fmt.Printf("Total Games: %d\n", total_games)
 	fmt.Printf("Elapsed Time: %.0f seconds\n", float64(elapsed_time / ns))
 
