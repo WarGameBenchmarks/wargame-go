@@ -3,16 +3,253 @@ package main
 import (
 	"fmt"
 	"time"
+	"math"
 	"math/rand"
+	"strings"
 )
 
-func Benchmark() {
+// Benchmark accepts a number of threads,
+// and will eventually benchmark.
+func Benchmark(threads int) {
 
-	threads := 4
+	progress_channels := make([](chan int), threads)
 
-	progress := make(chan int, 4096)
+	create_threads(threads, &progress_channels)
 
+	const ms int64 = 1000000
+	const ns int64 = 1000000000
+
+	// 10 seconds
+	const prime_time int64 = 	10000000000
+	// 60 seconds
+	const sample_time int64 = 60000000000
+
+	// development times
+	// const prime_time int64 = 	5000000000
+	// const sample_time int64 = 5000000000
+
+	// 1/15 of a second
+	const display_frequency int64 = ns/15
+	// 1/200 of a second
+	const sample_frequency int64 = 	ns/200
+
+	// when to end the the benchmark
+	const end_time int64 = prime_time + sample_time
+
+	const sample_size int64 = sample_time / sample_frequency
+
+	var samples []float64 = make([]float64, 0, sample_size)
+
+	var start_time int64 = time.Now().UnixNano()
+	var current_time int64 = time.Now().UnixNano()
+
+	var last_display_time int64 = current_time
+	var last_sample_time int64 = current_time
+
+	var elapsed_time int64 = 0
+
+	var phase int = 1
+	var total_games int64 = 1
+
+	var speed float64 = 0.0
+	var speed_v float64 = 0.0
+	var rate float64 = 0.0
+
+	var maximum_speed float64
+	var minimum_speed float64
+
+	monitor: for true {
+		total_games += int64(collect_progress(&progress_channels))
+
+		current_time = time.Now().UnixNano()
+		elapsed_time = current_time - start_time
+
+		rate = float64(elapsed_time) / float64(total_games)
+
+		speed = 1.0 / rate
+		speed_v = speed * float64(ms)
+
+		if phase == 1 && elapsed_time >= prime_time {
+			phase = 2
+
+			maximum_speed = speed
+			minimum_speed = speed
+
+		} else if phase == 2 {
+
+			if maximum_speed < speed {
+				maximum_speed = speed
+			}
+
+			if minimum_speed > speed {
+				minimum_speed = speed
+			}
+
+			if elapsed_time >= end_time {
+				phase = 3
+			}
+
+		} else if phase == 4 {
+			break monitor
+		}
+
+		if phase == 2 && (current_time - last_sample_time) > sample_frequency {
+			last_sample_time = current_time
+			samples = append(samples, speed)
+		}
+
+		if (current_time - last_display_time) > display_frequency {
+			last_display_time = current_time
+
+			if phase == 1 {
+				fmt.Printf("\r%d. priming | et = %ds; g = %d; s = %.5f g/ms; \t",
+				phase, elapsed_time / ns, total_games, speed_v)
+			} else if phase == 2 {
+				fmt.Printf("\r%d. sampling | et = %ds; g = %d; s = %.5f g/ms; t = %d; \t",
+				phase, elapsed_time / ns, total_games, speed_v, len(samples))
+			} else if phase == 3 {
+				phase = 4
+				// intentionally blank line
+				fmt.Printf("\r%d. done                                                                 \t",
+				phase)
+			}
+		}
+	}
+
+	// constants
+	const t_score = 3.291 // 99.9% t-score
+	const one_percent = .01 // 1%
+	const ten_percent = .1 // 10%
+
+	// final statistics
+	var mean float64 = get_mean(samples)
+	var stdev float64 = get_standard_deviation(samples, mean)
+	var cov float64 = get_coefficient_of_variation(mean, stdev)
+
+	// the delta of the max-min speeds
+	var min_max_delta float64 = maximum_speed - minimum_speed
+	var max_ten_percent float64 = maximum_speed * ten_percent
+
+	// one_sigma is 1 standard deviation away from the mean
+	var one_sigma_lower float64 = (mean-stdev)*float64(ms)
+	var one_sigma_upper float64 = (mean+stdev)*float64(ms)
+	var one_sigma_delta float64 = one_sigma_upper - one_sigma_lower
+
+	// 99.9% confidence interval; how likely it is that the true mean lies within
+	var ci_lower float64 = (mean - (t_score * (stdev / math.Sqrt(float64(len(samples)))))) * float64(ms)
+	var ci_upper float64 = (mean + (t_score * (stdev / math.Sqrt(float64(len(samples)))))) * float64(ms)
+	var ci_delta float64 = ci_upper - ci_lower
+
+	// controversial section! points are given
+	// based on passing basic statistical testing criteria
+	var criteria map[string]bool = make(map[string]bool)
+
+	// pass: is the delta smaller than 10% of the max?
+	criteria["10% Δ Min-Max"] = min_max_delta < max_ten_percent
+
+	// pass: COV < 1%; stdev / mean
+	criteria["1% COV"] = cov < one_percent
+
+	// the final speed is within 1 stdev
+	criteria["± 1σ"] = one_sigma_lower < speed_v && speed_v < one_sigma_upper
+
+	// the final speed is near the true mean
+	criteria["99.9% CI"] = ci_lower < speed_v && speed_v < ci_upper
+
+	// only printing below
+	// 1. raw statisitics
+	// 2. summary of the benchmark
+	// 3. rank and score
+
+	fmt.Printf("\n---\n")
+
+	fmt.Printf("Samples: %d collected\n", len(samples))
+	fmt.Printf("Mean: %.5f\n", mean * float64(ms))
+	fmt.Printf("Standard Deviation: %.5f\n", stdev * float64(ms))
+	fmt.Printf("Coefficient of Variation: %.5f\n", cov)
+	fmt.Printf("Min-Max:\t < %.5f - %.5f > Δ %.5f\n", minimum_speed*float64(ms), maximum_speed*float64(ms), min_max_delta*float64(ms))
+	fmt.Printf("1-σ:\t\t < %.5f - %.5f > Δ %.5f\n", one_sigma_lower, one_sigma_upper, one_sigma_delta)
+	fmt.Printf("99.9%% CI:\t < %.5f - %.5f > Δ %.5f\n", ci_lower, ci_upper, ci_delta)
+
+
+	fmt.Printf("---\n")
+
+	fmt.Printf("Threads: %d\n", threads)
+	fmt.Printf("Speed: %.5f g/ms\n", speed_v)
+	fmt.Printf("Total Games: %d\n", total_games)
+	fmt.Printf("Elapsed Time: %.0f seconds\n", float64(elapsed_time / ns))
+
+	fmt.Printf("---\n")
+
+	fmt.Printf("Rank: (%d/%d) %s\n", rank_passes(criteria), len(criteria), rank_letter(criteria))
+	fmt.Printf("Rank Criteria: %s\n", rank_reason(criteria))
+
+	fmt.Printf("---\n")
+
+	fmt.Printf("Score: %d\n", math_round(speed_v))
+
+}
+
+// Rank letter accepts a list of passed tests that
+// define certain statistical qualities.
+// For each successful pass, a better letter rank is returned.
+func rank_letter(criteria map[string]bool) string {
+	v := rank_passes(criteria)
+	letter := ""
+	switch v {
+		case 4: letter = "A+"
+		case 3: letter = "A"
+		case 2: letter = "B"
+		case 1: letter = "C"
+		case 0: letter = "D"
+		default: letter = "X"
+	}
+	return letter
+}
+
+func rank_passes(criteria map[string]bool) int {
+	r := 0
+	for _, v := range criteria {
+		if v {
+			r++
+		}
+	}
+	return r;
+}
+
+// Rank reason concatenates a string, or reports none.
+// The rank reasons are set in a string slice.
+func rank_reason(criteria map[string]bool) string {
+	reason := ""
+	passes := rank_passes(criteria)
+	if passes == 0 {
+		reason = "none"
+	} else {
+		passed := []string{}
+		for k,v := range criteria {
+			if v {
+				passed = append(passed, k)
+			}
+		}
+		reason = strings.Join(passed[:], " | ")
+	}
+	return reason
+}
+
+// Math round attempts to round a float to an integer.
+func math_round(f float64) int64 {
+	return int64(math.Floor(f + .5))
+}
+
+// Create threads accepts a number of threads and a channel pointer,
+// which will be populated with channels for each respective thread
+// spun up. Each thread runs a game loop, and upon completion of each game,
+// the thread sends through the progress channel.
+func create_threads(threads int, channels *[](chan int)) {
 	for i := 0; i < threads; i++ {
+
+		progress := make(chan int, threads * 1024)
+		(*channels)[i] = progress
 
 		go func() {
 			source := rand.NewSource(time.Now().UnixNano())
@@ -24,86 +261,45 @@ func Benchmark() {
 		}()
 
 	}
-
-	// samples := make([]float64, 10000)
-
-	phase := 1
-	_ = phase
-
-	total_games := int64(1)
-
-	start_time := time.Now().UnixNano()
-	current_time := time.Now().UnixNano()
-
-	prime_time := int64(60000000000)
-	// maximum_tests := 240
-
-	display_frequency := int64(50000000)
-	// sample_frequency := 5000000
-
-	last_display_time := int64(0)
-	// last_sample_time := 0
-
-	ms := int64(1000000)
-	ns := int64(1000000000)
-
-	elapsed_time := int64(0)
-	test_time := int64(0)
-
-	test_started := false
-
-	speed := 0.0
-	speed_v := 0.0
-	_ = speed_v
-	rate := 0.0
-
-	maximum_speed := float64(0)
-	// mean := 0.0
-	// stdev := 0.0
-	// cov := 0.0
-
-	monitor: for true {
-		select {
-			case p := <-progress:
-				total_games += int64(p)
-			default:
-				// do nothing!
-		}
-
-		current_time = time.Now().UnixNano()
-		elapsed_time = current_time - start_time
-
-		rate = float64(elapsed_time) / float64(total_games)
-
-		speed = 1.0 / rate
-		speed_v = speed * float64(ms)
-
-		if maximum_speed < speed {
-			maximum_speed = speed
-		}
-
-		if !test_started && elapsed_time >= prime_time {
-			// phase 1
-			test_started = true
-			phase = 2
-		} else if test_started && elapsed_time >= test_time {
-			
-			break monitor
-
-		}
-
-		if (current_time - last_display_time) > display_frequency {
-			last_display_time = current_time
-			
-			fmt.Printf("\r%d. et = %ds; g = %d; s = %f g/ms; \t",
-				phase, elapsed_time / ns, total_games, speed_v)
-			
-		}
-
-	}
-
-	fmt.Println("count:", total_games)
-
-
 }
 
+// Collect progress accesses each channel and listens, in a non-blocking fashion,
+// for any data passed back to it that indicates progress has been made.
+func collect_progress(channels *[](chan int)) int {
+	r := 0
+	for _,v := range *channels {
+		select {
+			case p := <-v:
+				r += p
+			default:
+				// no data available
+		}
+	}
+	return r
+}
+
+// Get mean calculates the mean based on the given samples.
+func get_mean(samples []float64) float64 {
+	var total float64 = 0
+	for _, v := range samples {
+		total += v
+	}
+	var mean float64 = total / float64(len(samples))
+	return mean
+}
+
+// Get standard deviation calculates the stdev based on the given samples and the mean.
+// TODO: implement `online_variance` algorithm
+func get_standard_deviation(samples []float64, mean float64) float64 {
+	var total float64 = 0
+	for _, v := range samples {
+		total += math.Pow(v - mean, 2)
+	}
+	var stdev float64 = math.Sqrt(total / float64(len(samples) - 1))
+	return stdev
+}
+
+// Get coefficient of variation calculations the standard deviation to mean ratio.
+func get_coefficient_of_variation(mean float64, stdev float64) float64 {
+	return stdev / mean
+}

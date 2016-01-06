@@ -1,24 +1,34 @@
 package main
 
 import (
+	"os"
+	"strconv"
 	"fmt"
 	"runtime"
 )
-
-const DEVELOPMENT = false
 
 func main() {
 
 	nCPU := runtime.NumCPU()
 	runtime.GOMAXPROCS(nCPU)
+
+	arguments := os.Args[1:]
 	
-	if DEVELOPMENT == true {
-		fmt.Println("WarGame Go")
-		fmt.Println("\tSee `debug.log` for details.")
-	} else {
-		fmt.Println("WarGame Go")
+	threads := 1
+
+	if len(arguments) >= 1 {
+		i, err := strconv.Atoi(arguments[0])
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			threads = i
+		} 
 	}
 
-	Benchmark()
+	fmt.Println("WarGame Go")
+
+	fmt.Printf("settings: threads = %d\n\n", threads)
+	
+	Benchmark(threads)
 
 }
