@@ -160,11 +160,8 @@ func Benchmark(threads int) {
 	fmt.Printf("Mean: %.5f\n", mean * float64(ms))
 	fmt.Printf("Standard Deviation: %.5f\n", stdev * float64(ms))
 	fmt.Printf("Coefficient of Variation: %.5f\n", cov)
-
 	fmt.Printf("Min-Max:\t < %.5f - %.5f > Δ %.5f\n", minimum_speed*float64(ms), maximum_speed*float64(ms), min_max_delta*float64(ms))
-
 	fmt.Printf("1-σ:\t\t < %.5f - %.5f > Δ %.5f\n", one_sigma_lower, one_sigma_upper, one_sigma_delta)
-
 	fmt.Printf("99.9%% CI:\t < %.5f - %.5f > Δ %.5f\n", ci_lower, ci_upper, ci_delta)
 
 
@@ -174,6 +171,7 @@ func Benchmark(threads int) {
 	fmt.Printf("Speed: %.5f\n", speed_v)
 	fmt.Printf("Total Games: %d\n", total_games)
 	fmt.Printf("Elapsed Time: %.0f seconds\n", float64(elapsed_time / ns))
+
 	fmt.Printf("---\n")
 
 	fmt.Printf("Rank: (%d/%d) %s\n", rank_passes(criteria), len(criteria), rank_letter(criteria))
