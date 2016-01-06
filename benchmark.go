@@ -138,23 +138,21 @@ func Benchmark(threads int) {
 
 	// controversial section! points are given
 	// based on passing basic statistical testing criteria
-	var points []string = make([]string, 0, 3)
+	var criteria map[string]bool = make(map[string]bool)
 
 	// pass: COV < 1%; stdev / mean
-	if cov < one_percent {
-		points = append(points, "1% COV")
-	}
+	criteria["1% COV"] = cov < one_percent
 
 	// the final speed is within 1 stdev
-	if one_sigma_lower < speed_v && speed_v < one_sigma_upper {
-		points = append(points, "±1σ")
-	}
+	criteria["±1σ"] = one_sigma_lower < speed_v && speed_v < one_sigma_upper
 
 	// the final speed is near the true mean
-	if ci_lower < speed_v && speed_v < ci_upper {
-		points = append(points, "99.9% CI")
-	}
+	criteria["99.9% CI"] = ci_lower < speed_v && speed_v < ci_upper
 
+	// only printing below
+	// 1. raw statisitics
+	// 2. summary of the benchmark
+	// 3. rank and score
 
 	fmt.Printf("\n---\n")
 
@@ -167,26 +165,31 @@ func Benchmark(threads int) {
 
 	fmt.Printf("1-σ:\t\t < %.5f - %.5f > Δ %.5f\n", one_sigma_lower, one_sigma_upper, one_sigma_delta)
 
-	fmt.Printf("99.9%% CI:\t < %.5f - %.5f > Δ %.5f", ci_lower, ci_upper, ci_delta)
+	fmt.Printf("99.9%% CI:\t < %.5f - %.5f > Δ %.5f\n", ci_lower, ci_upper, ci_delta)
 
 
-	fmt.Printf("\n---\n")
+	fmt.Printf("---\n")
 
 	fmt.Printf("Threads: %d\n", threads)
 	fmt.Printf("Speed: %.5f\n", speed_v)
 	fmt.Printf("Total Games: %d\n", total_games)
 	fmt.Printf("Elapsed Time: %.0f seconds\n", float64(elapsed_time / ns))
+	fmt.Printf("---\n")
 
-	fmt.Printf("Rank Criteria: %s - %s\n", rank_letter(points), rank_reason(points))
-	fmt.Printf("\nScore: %d\n", math_round(speed_v))
+	fmt.Printf("Rank: (%d/%d) %s\n", rank_passes(criteria), len(criteria), rank_letter(criteria))
+	fmt.Printf("Rank Criteria: %s\n", rank_reason(criteria))
+
+	fmt.Printf("---\n")
+
+	fmt.Printf("Score: %d\n", math_round(speed_v))
 
 }
 
 // Rank letter accepts a list of passed tests that
 // define certain statistical qualities.
 // For each successful pass, a better letter rank is returned.
-func rank_letter(passes []string) string {
-	v := len(passes)
+func rank_letter(criteria map[string]bool) string {
+	v := rank_passes(criteria)
 	letter := ""
 	switch v {
 		case 3: letter = "A"
@@ -198,14 +201,31 @@ func rank_letter(passes []string) string {
 	return letter
 }
 
+func rank_passes(criteria map[string]bool) int {
+	r := 0
+	for _, v := range criteria {
+		if v {
+			r++
+		}
+	}
+	return r;
+}
+
 // Rank reason concatenates a string, or reports none.
 // The rank reasons are set in a string slice.
-func rank_reason(passes []string) string {
+func rank_reason(criteria map[string]bool) string {
 	reason := ""
-	if len(passes) == 0 {
+	passes := rank_passes(criteria)
+	if passes == 0 {
 		reason = "none"
 	} else {
-		reason = strings.Join(passes[:], " | ")
+		passed := []string{}
+		for k,v := range criteria {
+			if v {
+				passed = append(passed, k)
+			}
+		}
+		reason = strings.Join(passed[:], " | ")
 	}
 	return reason
 }
