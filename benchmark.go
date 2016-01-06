@@ -123,8 +123,12 @@ func Benchmark(threads int) {
 
 	// final statistics
 	var mean float64 = get_mean(samples)
+	var median float64 = get_median(samples)
 	var stdev float64 = get_standard_deviation(samples, mean)
 	var cov float64 = get_coefficient_of_variation(mean, stdev)
+
+	// the signed value delta of mean and median
+	var mean_median_delta float64 = mean - median
 
 	// the delta of the max-min speeds
 	var min_max_delta float64 = maximum_speed - minimum_speed
@@ -165,7 +169,8 @@ func Benchmark(threads int) {
 	fmt.Printf("\n---\n")
 
 	fmt.Printf("Samples: %d collected\n", len(samples))
-	fmt.Printf("Mean: %.5f\n", mean * float64(ms))
+	fmt.Printf("Mean:\t %.5f\n", mean * float64(ms))
+	fmt.Printf("Median:\t %.5f Δ %.5f\n", median * float64(ms), mean_median_delta * float64(ms))
 	fmt.Printf("Standard Deviation: %.5f\n", stdev * float64(ms))
 	fmt.Printf("Coefficient of Variation: %.5f\n", cov)
 	fmt.Printf("Min-Max:\t < %.5f - %.5f > Δ %.5f\n", minimum_speed*float64(ms), maximum_speed*float64(ms), min_max_delta*float64(ms))
@@ -279,6 +284,19 @@ func collect_progress(channels *[](chan int)) int {
 		}
 	}
 	return r
+}
+
+func get_median(samples []float64) float64 {
+	var length int = len(samples)
+	var median float64 = 0
+	if length % 2 == 0 {
+		a := samples[length / 2 - 1]
+		b := samples[length / 2 + 1]
+		median = (a+b)/2
+	} else {
+		median = samples[length / 2]
+	}
+	return median
 }
 
 // Get mean calculates the mean based on the given samples.
