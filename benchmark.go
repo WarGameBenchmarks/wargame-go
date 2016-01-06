@@ -128,7 +128,7 @@ func Benchmark(threads int) {
 	var cov float64 = get_coefficient_of_variation(mean, stdev)
 
 	// the signed value delta of mean and median
-	var mean_median_delta float64 = mean - median
+	var mean_median_delta float64 = median - mean
 
 	// the delta of the max-min speeds
 	var min_max_delta float64 = maximum_speed - minimum_speed
@@ -148,34 +148,42 @@ func Benchmark(threads int) {
 	// based on passing basic statistical testing criteria
 	var criteria map[string]bool = make(map[string]bool)
 
+	// pass: the mean_median_delta is less than .01 i.e. that it is small
+	criteria["1"] = math.Abs(mean_median_delta * float64(ms)) < one_percent
+
 	// pass: is the delta smaller than 10% of the max?
-	criteria["10% Δ Min-Max"] = min_max_delta < max_ten_percent
+	criteria["2"] = min_max_delta < max_ten_percent
 
 	// pass: COV < 1%; stdev / mean
-	criteria["1% COV"] = cov < one_percent
+	criteria["3"] = cov < one_percent
 
 	// pass: the final speed is within 1 stdev
-	criteria["± 1σ"] = one_sigma_lower < speed_v && speed_v < one_sigma_upper
+	criteria["4"] = one_sigma_lower < speed_v && speed_v < one_sigma_upper
 
 	// pass: the final speed is near the true mean; within the confidence interval
-	criteria["99.9% CI"] = ci_lower < speed_v && speed_v < ci_upper
+	criteria["5"] = ci_lower < speed_v && speed_v < ci_upper
 
 	// only printing below
 	// 1. raw statisitics
-	// 2. summary of the benchmark
-	// 3. rank
-	// 4. score
+	// 2. ranges
+	// 3. summary of the benchmark
+	// 4. rank
+	// 5. score
 
 	fmt.Printf("\n---\n")
 
 	fmt.Printf("Samples: %d collected\n", len(samples))
-	fmt.Printf("Mean:\t %.5f\n", mean * float64(ms))
-	fmt.Printf("Median:\t %.5f Δ %.5f\n", median * float64(ms), mean_median_delta * float64(ms))
-	fmt.Printf("Standard Deviation: %.5f\n", stdev * float64(ms))
-	fmt.Printf("Coefficient of Variation: %.5f\n", cov)
-	fmt.Printf("Min-Max:\t < %.5f - %.5f > Δ %.5f\n", minimum_speed*float64(ms), maximum_speed*float64(ms), min_max_delta*float64(ms))
-	fmt.Printf("1-σ:\t\t < %.5f - %.5f > Δ %.5f\n", one_sigma_lower, one_sigma_upper, one_sigma_delta)
-	fmt.Printf("99.9%% CI:\t < %.5f - %.5f > Δ %.5f\n", ci_lower, ci_upper, ci_delta)
+	fmt.Printf("Mean:\t %9.5f\n", mean * float64(ms))
+	fmt.Printf("Median:\t %9.5f\n", median * float64(ms))
+	fmt.Printf("Standard Deviation: %8.5f\n", stdev * float64(ms))
+	fmt.Printf("Coefficient of Variation: %7.5f\n", cov)
+
+	fmt.Printf("---\n")
+
+	fmt.Printf("μ-Median:\t < %9.5f - %9.5f > Δ %8.5f\n", mean * float64(ms), median * float64(ms), mean_median_delta * float64(ms))
+	fmt.Printf("Min-Max:\t < %9.5f - %9.5f > Δ %8.5f\n", minimum_speed*float64(ms), maximum_speed*float64(ms), min_max_delta*float64(ms))
+	fmt.Printf("1-σ:\t\t < %9.5f - %9.5f > Δ %8.5f\n", one_sigma_lower, one_sigma_upper, one_sigma_delta)
+	fmt.Printf("99.9%% CI:\t < %9.5f - %9.5f > Δ %8.5f\n", ci_lower, ci_upper, ci_delta)
 
 
 	fmt.Printf("---\n")
@@ -203,12 +211,12 @@ func rank_letter(criteria map[string]bool) string {
 	v := rank_passes(criteria)
 	letter := ""
 	switch v {
-		case 4: letter = "A+"
-		case 3: letter = "A"
-		case 2: letter = "B"
-		case 1: letter = "C"
-		case 0: letter = "D"
-		default: letter = "X"
+		case 5: letter = "A+"
+		case 4: letter = "A"
+		case 3: letter = "B"
+		case 2: letter = "C"
+		case 1: letter = "D"
+		default: letter = "F"
 	}
 	return letter
 }
