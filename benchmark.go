@@ -20,9 +20,13 @@ func Benchmark(threads int) {
 	const ns int64 = 1000000000
 
 	// 10 seconds
-	const prime_time int64 = 	10000000000
+	// const prime_time int64 = 	10000000000
 	// 60 seconds
-	const sample_time int64 = 60000000000
+	// const sample_time int64 = 60000000000
+
+	// development times
+	const prime_time int64 = 	5000000000
+	const sample_time int64 = 5000000000
 
 	// 1/15 of a second
 	const display_frequency int64 = ns/15
@@ -138,17 +142,17 @@ func Benchmark(threads int) {
 
 	// pass: COV < 1%; stdev / mean
 	if cov < one_percent {
-		points = append(points, "1%cov")
+		points = append(points, "1% COV")
 	}
 
 	// the final speed is within 1 stdev
 	if one_sigma_lower < speed_v && speed_v < one_sigma_upper {
-		points = append(points, "1σ")
+		points = append(points, "±1σ")
 	}
 
 	// the final speed is near the true mean
 	if ci_lower < speed_v && speed_v < ci_upper {
-		points = append(points, "99.9%CI")
+		points = append(points, "99.9% CI")
 	}
 
 
@@ -173,8 +177,8 @@ func Benchmark(threads int) {
 	fmt.Printf("Total Games: %d\n", total_games)
 	fmt.Printf("Elapsed Time: %.0f seconds\n", float64(elapsed_time / ns))
 
-	fmt.Printf("Rank Passes: %s\n", rank_reason(points))
-	fmt.Printf("\nScore: %d %s\n", math_round(speed_v), rank_letter(points))
+	fmt.Printf("Rank Criteria: %s - %s\n", rank_letter(points), rank_reason(points))
+	fmt.Printf("\nScore: %d\n", math_round(speed_v))
 
 }
 
@@ -201,7 +205,7 @@ func rank_reason(passes []string) string {
 	if len(passes) == 0 {
 		reason = "none"
 	} else {
-		reason = strings.Join(passes[:], ", ")
+		reason = strings.Join(passes[:], " | ")
 	}
 	return reason
 }
