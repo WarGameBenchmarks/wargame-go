@@ -16,47 +16,45 @@ func Benchmark(threads int) {
 
 	create_threads(threads, &progress_channels)
 
-	samples := make([]float64, 0, 12000)
+	const ms int64 = 1000000
+	const ns int64 = 1000000000
 
-	phase := 1
+	// 10 seconds
+	const prime_time int64 = 	10000000000
+	// 60 seconds
+	const sample_time int64 = 60000000000
 
-	total_games := int64(1)
+	// 1/15 of a second
+	const display_frequency int64 = ns/15
+	// 1/200 of a second
+	const sample_frequency int64 = 	ns/200
 
-	start_time := time.Now().UnixNano()
-	current_time := time.Now().UnixNano()
+	// when to end the the benchmark
+	const end_time int64 = prime_time + sample_time
 
-	// production values
-	prime_time := int64(10000000000)
-	sample_time := int64(60000000000)
+	const sample_size int64 = sample_time / sample_frequency
 
-	// very short values for development
-	// prime_time := int64(5000000000)
-	// sample_time := int64(5000000000)
-	
-	end_time := prime_time + sample_time
+	var samples []float64 = make([]float64, 0, sample_size)
 
-	display_frequency := int64(66670000)
-	sample_frequency := int64(5000000)
+	var start_time int64 = time.Now().UnixNano()
+	var current_time int64 = time.Now().UnixNano()
 
-	last_display_time := int64(0)
-	last_sample_time := int64(0)
+	var last_display_time int64 = current_time
+	var last_sample_time int64 = current_time
 
-	ms := int64(1000000)
-	ns := int64(1000000000)
+	var elapsed_time int64 = 0
 
-	elapsed_time := int64(0)
+	var phase int = 1
+	var total_games int64 = 1
 
-	speed := 0.0
-	speed_v := 0.0
-	rate := 0.0
+	var speed float64 = 0.0
+	var speed_v float64 = 0.0
+	var rate float64 = 0.0
 
 	var maximum_speed float64
 	var minimum_speed float64
-	mean := 0.0
-	stdev := 0.0
-	cov := 0.0
 
-	monitor: for true {		
+	monitor: for true {
 		total_games += int64(collect_progress(&progress_channels))
 
 		current_time = time.Now().UnixNano()
@@ -104,41 +102,39 @@ func Benchmark(threads int) {
 				phase, elapsed_time / ns, total_games, speed_v)
 			} else if phase == 2 {
 				fmt.Printf("\r%d. sampling | et = %ds; g = %d; s = %.5f g/ms; t = %d; \t",
-				phase, elapsed_time / ns, total_games, speed_v, len(samples))				
+				phase, elapsed_time / ns, total_games, speed_v, len(samples))
 			} else if phase == 3 {
 				phase = 4
 				fmt.Printf("\r%d. done | et = %ds; g = %d; s = %.5f g/ms; t = %d; \t",
-				phase, elapsed_time / ns, total_games, speed_v, len(samples))	
+				phase, elapsed_time / ns, total_games, speed_v, len(samples))
 			}
-			
 		}
-
 	}
 
 	// final statistics
-	mean = get_mean(samples)
-	stdev = get_standard_deviation(samples, mean)
-	cov = get_coefficient_of_variation(mean, stdev)
+	var mean float64 = get_mean(samples)
+	var stdev float64 = get_standard_deviation(samples, mean)
+	var cov float64 = get_coefficient_of_variation(mean, stdev)
 
 	// the delta of the max-min speeds
-	min_max_delta := maximum_speed - minimum_speed
+	var min_max_delta float64 = maximum_speed - minimum_speed
 
 	// one_sigma is 1 standard deviation away from the mean
-	one_sigma_lower := (mean-stdev)*float64(ms)
-	one_sigma_upper := (mean+stdev)*float64(ms)
-	one_sigma_delta := one_sigma_upper - one_sigma_lower
+	var one_sigma_lower float64 = (mean-stdev)*float64(ms)
+	var one_sigma_upper float64 = (mean+stdev)*float64(ms)
+	var one_sigma_delta float64 = one_sigma_upper - one_sigma_lower
 
-	const t_score = 3.291 // 99.9%
-	const one_percent = .01
+	const t_score = 3.291 // 99.9% t-score
+	const one_percent = .01 // 1%
 
 	// 99.9% confidence interval; how likely it is that the true mean lies within
-	nfci_lower := (mean - (t_score * (stdev / math.Sqrt(float64(len(samples)))))) * float64(ms)
-	nfci_upper := (mean + (t_score * (stdev / math.Sqrt(float64(len(samples)))))) * float64(ms)
-	nfci_delta := nfci_upper - nfci_lower
+	var ci_lower float64 = (mean - (t_score * (stdev / math.Sqrt(float64(len(samples)))))) * float64(ms)
+	var ci_upper float64 = (mean + (t_score * (stdev / math.Sqrt(float64(len(samples)))))) * float64(ms)
+	var ci_delta float64 = ci_upper - ci_lower
 
 	// controversial section! points are given
 	// based on passing basic statistical testing criteria
-	points := make([]string, 0, 3)
+	var points []string = make([]string, 0, 3)
 
 	// pass: COV < 1%; stdev / mean
 	if cov < one_percent {
@@ -151,11 +147,11 @@ func Benchmark(threads int) {
 	}
 
 	// the final speed is near the true mean
-	if nfci_lower < speed_v && speed_v < nfci_upper {
+	if ci_lower < speed_v && speed_v < ci_upper {
 		points = append(points, "99.9%CI")
 	}
 
-	
+
 	fmt.Printf("\n---\n")
 
 	fmt.Printf("Samples: %d collected\n", len(samples))
@@ -164,14 +160,14 @@ func Benchmark(threads int) {
 	fmt.Printf("Coefficient of Variation: %.5f\n", cov)
 
 	fmt.Printf("Min-Max:\t < %.5f - %.5f > Δ %.5f\n", minimum_speed*float64(ms), maximum_speed*float64(ms), min_max_delta*float64(ms))
-	
+
 	fmt.Printf("1-σ:\t\t < %.5f - %.5f > Δ %.5f\n", one_sigma_lower, one_sigma_upper, one_sigma_delta)
 
-	fmt.Printf("99.9%% CI:\t < %.5f - %.5f > Δ %.5f", nfci_lower, nfci_upper, nfci_delta)
+	fmt.Printf("99.9%% CI:\t < %.5f - %.5f > Δ %.5f", ci_lower, ci_upper, ci_delta)
 
 
 	fmt.Printf("\n---\n")
-	
+
 	fmt.Printf("Threads: %d\n", threads)
 	fmt.Printf("Speed: %.5f\n", speed_v)
 	fmt.Printf("Total Games: %d\n", total_games)
@@ -240,7 +236,7 @@ func create_threads(threads int, channels *[](chan int)) {
 // Collect progress accesses each channel and listens, in a non-blocking fashion,
 // for any data passed back to it that indicates progress has been made.
 func collect_progress(channels *[](chan int)) int {
-	r := 0	
+	r := 0
 	for _,v := range *channels {
 		select {
 			case p := <-v:
