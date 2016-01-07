@@ -54,7 +54,6 @@ func Benchmark(threads int) {
 
 	var speed float64 = 0.0
 	var speed_v float64 = 0.0
-	var rate float64 = 0.0
 
 	var maximum_speed float64
 	var minimum_speed float64
@@ -65,9 +64,7 @@ func Benchmark(threads int) {
 		current_time = time.Now().UnixNano()
 		elapsed_time = current_time - start_time
 
-		rate = float64(elapsed_time) / float64(total_games)
-
-		speed = 1.0 / rate
+		speed = float64(total_games) / float64(elapsed_time)
 		speed_v = speed * float64(ms)
 
 		if phase == 1 && elapsed_time >= prime_time {
