@@ -14,20 +14,25 @@ const ns int64 = 1000000000
 
 // Benchmark accepts a number of threads,
 // and will eventually benchmark.
-func Benchmark(threads int) {
+func Benchmark(threads int, multiplier float64) {
 
 	progress_channels := make([](chan int), threads)
 
 	create_threads(threads, &progress_channels)
 
 	// 10 seconds
-	// const prime_time int64 = 	10000000000
+	var prime_time int64 = 10000000000
 	// 60 seconds
-	// const sample_time int64 = 60000000000
+	var sample_time int64 = 60000000000
+
+	if multiplier != 1.0 {
+		prime_time = int64(float64(prime_time) * multiplier)
+		sample_time = int64(float64(sample_time) * multiplier)
+	}
 
 	// development times
-	const prime_time int64 = 	5000000000
-	const sample_time int64 = 5000000000
+	// const prime_time int64 = 	5000000000
+	// const sample_time int64 = 5000000000
 
 	// 1/15 of a second
 	const display_frequency int64 = ns/15
@@ -35,9 +40,9 @@ func Benchmark(threads int) {
 	const sample_frequency int64 = 	ns/200
 
 	// when to end the the benchmark
-	const end_time int64 = prime_time + sample_time
+	var end_time int64 = prime_time + sample_time
 
-	const sample_size int64 = sample_time / sample_frequency
+	var sample_size int64 = sample_time / sample_frequency
 
 	var samples []float64 = make([]float64, 0, sample_size)
 
