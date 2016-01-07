@@ -48,6 +48,12 @@ Alternatively, run this inside of the repository's directory:
 go build
 ```
 
+You can use the generated binary:
+
+```
+./wargame-go
+```
+
 Sample Output
 -------------
 
