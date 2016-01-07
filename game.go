@@ -6,16 +6,16 @@ import (
 
 func Game(generator *rand.Rand) {
 
-	deck := NewDeckWithGenerator([]Card{}, generator)
+	deck := NewDeck([]Card{})
 	deck.Fresh()
-	deck.Shuffle()
+	deck.Shuffle(generator)
 
 	player1, player2 := deck.Split()
 
 	turns := 0
 
 	// an empty deck
-	winner := NewDeckWithGenerator([]Card{}, generator)
+	winner := NewDeck([]Card{})
 
 	base: for len(player1.cards) > 0 && len(player2.cards) > 0 {
 		turns += 1
@@ -47,10 +47,10 @@ func Game(generator *rand.Rand) {
 				player2.GiveCard(winner)
 
 				if c1.Compare(c2) > 0 {
-					winner.Shuffle()
+					winner.Shuffle(generator)
 					winner.GiveCards(player1)
 				} else if c1.Compare(c2) < 0 {
-					winner.Shuffle()
+					winner.Shuffle(generator)
 					winner.GiveCards(player2)
 				} else {
 					// another war
@@ -59,10 +59,10 @@ func Game(generator *rand.Rand) {
 			}
 
 		} else if c1.Compare(c2) > 0 {
-			winner.Shuffle()
+			winner.Shuffle(generator)
 			winner.GiveCards(player1)
 		} else if c1.Compare(c2) < 0 {
-			winner.Shuffle()
+			winner.Shuffle(generator)
 			winner.GiveCards(player2)
 		}
 
