@@ -6,7 +6,11 @@ import (
 	"math"
 	"math/rand"
 	"strings"
+	"sort"
 )
+
+const ms int64 = 1000000
+const ns int64 = 1000000000
 
 // Benchmark accepts a number of threads,
 // and will eventually benchmark.
@@ -16,17 +20,14 @@ func Benchmark(threads int) {
 
 	create_threads(threads, &progress_channels)
 
-	const ms int64 = 1000000
-	const ns int64 = 1000000000
-
 	// 10 seconds
-	const prime_time int64 = 	10000000000
+	// const prime_time int64 = 	10000000000
 	// 60 seconds
-	const sample_time int64 = 60000000000
+	// const sample_time int64 = 60000000000
 
 	// development times
-	// const prime_time int64 = 	5000000000
-	// const sample_time int64 = 5000000000
+	const prime_time int64 = 	5000000000
+	const sample_time int64 = 5000000000
 
 	// 1/15 of a second
 	const display_frequency int64 = ns/15
@@ -148,8 +149,8 @@ func Benchmark(threads int) {
 	// based on passing basic statistical testing criteria
 	var criteria map[string]bool = make(map[string]bool)
 
-	// pass: the mean_median_delta is less than .01 i.e. that it is small
-	criteria["1"] = math.Abs(mean_median_delta * float64(ms)) < one_percent
+	// pass: the mean_median_delta is less than the standard deviation
+	criteria["1"] = math.Abs(mean_median_delta) < stdev
 
 	// pass: is the delta smaller than 10% of the max?
 	criteria["2"] = min_max_delta < max_ten_percent
@@ -172,26 +173,26 @@ func Benchmark(threads int) {
 
 	fmt.Printf("\n---\n")
 
-	fmt.Printf("Samples: %d collected\n", len(samples))
+	fmt.Printf("Samples: %9d\n", len(samples))
 	fmt.Printf("Mean:\t %9.5f\n", mean * float64(ms))
 	fmt.Printf("Median:\t %9.5f\n", median * float64(ms))
-	fmt.Printf("Standard Deviation: %8.5f\n", stdev * float64(ms))
-	fmt.Printf("Coefficient of Variation: %7.5f\n", cov)
+	fmt.Printf("S.D.:\t %9.5f\n", stdev * float64(ms))
+	fmt.Printf("C.O.V.:\t %9.5f\n", cov)
 
 	fmt.Printf("---\n")
 
-	fmt.Printf("μ-Median:\t < %9.5f - %9.5f > Δ %8.5f\n", mean * float64(ms), median * float64(ms), mean_median_delta * float64(ms))
-	fmt.Printf("Min-Max:\t < %9.5f - %9.5f > Δ %8.5f\n", minimum_speed*float64(ms), maximum_speed*float64(ms), min_max_delta*float64(ms))
-	fmt.Printf("1-σ:\t\t < %9.5f - %9.5f > Δ %8.5f\n", one_sigma_lower, one_sigma_upper, one_sigma_delta)
-	fmt.Printf("99.9%% CI:\t < %9.5f - %9.5f > Δ %8.5f\n", ci_lower, ci_upper, ci_delta)
+	fmt.Printf("μ-Median:\t < %9.5f - %9.5f > Δ %9.5f\n", mean * float64(ms), median * float64(ms), mean_median_delta * float64(ms))
+	fmt.Printf("Min-Max:\t < %9.5f - %9.5f > Δ %9.5f\n", minimum_speed*float64(ms), maximum_speed*float64(ms), min_max_delta*float64(ms))
+	fmt.Printf("1-σ:\t\t < %9.5f - %9.5f > Δ %9.5f\n", one_sigma_lower, one_sigma_upper, one_sigma_delta)
+	fmt.Printf("99.9%% CI:\t < %9.5f - %9.5f > Δ %9.5f\n", ci_lower, ci_upper, ci_delta)
 
 
 	fmt.Printf("---\n")
 
 	fmt.Printf("Threads: %d\n", threads)
 	fmt.Printf("Speed: %.5f g/ms\n", speed_v)
-	fmt.Printf("Total Games: %d\n", total_games)
-	fmt.Printf("Elapsed Time: %.0f seconds\n", float64(elapsed_time / ns))
+	fmt.Printf("Games: %d\n", total_games)
+	fmt.Printf("Duration: %.0fs\n", float64(elapsed_time / ns))
 
 	fmt.Printf("---\n")
 
@@ -295,6 +296,7 @@ func collect_progress(channels *[](chan int)) int {
 }
 
 func get_median(samples []float64) float64 {
+	sort.Float64s(samples)
 	var length int = len(samples)
 	var median float64 = 0
 	if length % 2 == 0 {
