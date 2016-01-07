@@ -187,11 +187,6 @@ func Benchmark(threads int, multiplier float64) {
 
 	fmt.Printf("---\n")
 
-	fmt.Printf("μ-Median:\t < %9.5f - %9.5f > Δ %9.5f\n",
-		toms(mm_lower),
-		toms(mm_upper),
-		toms(mean_median_delta))
-
 	fmt.Printf("Min-Max:\t < %9.5f - %9.5f > Δ %9.5f\n",
 		toms(minimum_speed),
 		toms(maximum_speed),
@@ -201,6 +196,11 @@ func Benchmark(threads int, multiplier float64) {
 		toms(one_sigma_lower),
 		toms(one_sigma_upper),
 		toms(one_sigma_delta))
+
+	fmt.Printf("μ-Median:\t < %9.5f - %9.5f > Δ %9.5f\n",
+		toms(mm_lower),
+		toms(mm_upper),
+		toms(mean_median_delta))
 
 	fmt.Printf("99.9%% CI:\t < %9.5f - %9.5f > Δ %9.5f\n",
 		toms(ci_lower),
