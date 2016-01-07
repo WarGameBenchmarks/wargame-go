@@ -3,23 +3,42 @@ Legend
 
 The WarGame plays endless loops of the War card game in the number of specified threads.
 
-The legend contains descriptions you may see in the WarGame output. 
+The legend contains descriptions you may see in the WarGame output.
 
 #### Threads
 
 The number of threads that parallel games of War will be run in.
 
+Often, threads are implemented differently across operating systems and language platforms.
+
 #### Multiplier
 
 How much to multiply the base timings.
 
+Examples:
+
+- 1x: 10s priming, 50s sampling
+- 1.5x: 15s priming, 75s sampling
+- 3x: 30s priming, 90s sampling
+- 5x: 50s priming, 250s sampling
+
+Using `./wargame-go 4 5` will use 4 threads and the benchmark will run for 5 minutes, of which 50 seconds will be prime time, and 250 seconds will be sample time.
+
 #### Prime Time (priming)
 
-To get the benchmark warmed up, it is primed for this duration before statistical sampling begins. By default, *prime time* is 10 seconds.
+To get the benchmark warmed up, it is primed for this duration before statistical sampling begins.
+
+The benchmark records various initial times with a high precision timer. To amortize the initialization costs of variables, loops, and other operations, the *prime time* spreads out the cost over a known period of time before sampling begins to decrease the chance that results are skewed.
+
+By default, *prime time* is 10 seconds. This value can be increased with the *multiplier*.
+
+
 
 #### Sample Time (sampling)
 
-Samples are collected for this during. Samples are collected approximately at 5 millisecond intervals. By default, *sample time* is 50 seconds.
+Statistics are collected every 5 milliseconds during the *sample time*. The value being collected is the *speed* at which the benchmark is running games.
+
+By default, *sample time* is 50 seconds. This value can be increased with the *multiplier*.
 
 #### Elapsed Time (et)
 
@@ -27,7 +46,7 @@ This is the time that has passed since the benchmark began.
 
 #### Games (g)
 
-The number of games counted so far.
+The number of war games counted so far.
 
 #### Speed (s)
 
