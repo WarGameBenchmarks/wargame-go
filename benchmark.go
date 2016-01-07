@@ -227,6 +227,8 @@ func Benchmark(threads int, multiplier float64) {
 
 }
 
+// Instead of multiplying all over, wrap float's that need to be
+// represented in milliseconds with this function.
 func toms(f float64) float64 {
 	return f * float64(ms)
 }
