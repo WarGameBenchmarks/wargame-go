@@ -109,16 +109,29 @@ type Deck struct {
 	cards []Card
 }
 
+// NewDeckEmpty will return a new empty deck of cards
+func NewDeckEmpty() *Deck {
+	c := []Card{}
+	d := NewDeck(c)
+	return d
+}
+
+// NewDeck will return a new deck of cards
+func NewDeck(cards []Card) *Deck {
+	return &Deck{cards: cards}
+}
+
+
 // Fresh populates a deck with a `fresh` set of cards.
 func (d *Deck) Fresh() {
 	values := []Value{
-		Two, Three, Four, 
-		Five, Six, Seven, 
-		Eight, Nine, Ten, 
+		Two, Three, Four,
+		Five, Six, Seven,
+		Eight, Nine, Ten,
 		Jack, Queen, King,
 		Ace}
 	suits := []Suit{Clubs, Hearts, Diamonds, Spades}
-	
+
 	// slice, instead of an array
 	d.cards = make([]Card, 52)
 
@@ -134,22 +147,22 @@ func (d *Deck) Fresh() {
 // Split attempts to evenly divide a deck in half, and returns two decks.
 // The halfway point is defined with integer division,
 // so a deck with 11 cards will be split [5|6]
-func (d *Deck) Split() (Deck,Deck) {
+func (d *Deck) Split() (*Deck,*Deck) {
 	l := len(d.cards)
 	h := l / 2
 
 	part1 := d.cards[:h]
 	part2 := d.cards[h:]
 
-	return Deck{part1}, Deck{part2}
+	return NewDeck(part1), NewDeck(part2)
 }
 
 // Shuffle randomizes a deck- a collection of cards.
-func (d *Deck) Shuffle() {
+func (d *Deck) Shuffle(generator *rand.Rand) {
 	cards := d.cards
 
 	for i := range cards {
-		j := rand.Intn(i+1)
+		j := generator.Intn(i+1)
 		cards[i], cards[j] = cards[j], cards[i]
 	}
 
@@ -203,4 +216,3 @@ func (d *Deck) GiveCards(other *Deck) {
 func init() {
 	rand.Seed(time.Now().UnixNano())
 }
-
