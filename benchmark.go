@@ -20,10 +20,18 @@ func Benchmark(threads int, multiplier float64) {
 
 	create_threads(threads, &progress_channels)
 
+	// 1/15 of a second
+	const display_frequency int64 = ns/10
+	// 1/200 of a second
+	const sample_frequency int64 = 	ns/200
+
 	// 10 seconds
-	var prime_time int64 = 10000000000
-	// 60 seconds
-	var sample_time int64 = 60000000000
+	var prime_time int64 = 	10000000000
+	// 50 seconds
+	var sample_time int64 = 50000000000
+
+	// in this way, the total benchmark time is 60 seconds
+	// and any integer multipliers will be multiples of 60
 
 	if multiplier != 1.0 {
 		prime_time = int64(float64(prime_time) * multiplier)
@@ -34,11 +42,6 @@ func Benchmark(threads int, multiplier float64) {
 	// const prime_time int64 = 	5000000000
 	// const sample_time int64 = 5000000000
 
-	// 1/15 of a second
-	const display_frequency int64 = ns/15
-	// 1/200 of a second
-	const sample_frequency int64 = 	ns/200
-
 	// when to end the the benchmark
 	var end_time int64 = prime_time + sample_time
 
@@ -48,17 +51,18 @@ func Benchmark(threads int, multiplier float64) {
 
 	var start_time int64 = time.Now().UnixNano()
 	var current_time int64 = time.Now().UnixNano()
+	var elapsed_time int64
 
 	var last_display_time int64 = current_time
 	var last_sample_time int64 = current_time
 
-	var elapsed_time int64 = 0
-
 	var phase int = 1
+
+	// to avoid the rare but possible case when `collect_progress` has not
+	// counted any games finishing yet
 	var total_games int64 = 1
 
-	var speed float64 = 0.0
-	// var speed_v float64 = 0.0
+	var speed float64 = 0
 
 	var maximum_speed float64
 	var minimum_speed float64
@@ -130,7 +134,7 @@ func Benchmark(threads int, multiplier float64) {
 	var cov float64 = get_coefficient_of_variation(mean, stdev)
 
 	// the signed value delta of mean and median
-	var mean_median_delta float64 = median - mean
+	var mean_median_delta float64 = math.Abs(median - mean)
 	var mm_lower, mm_upper float64 = math.Min(mean, median), math.Max(mean, median)
 
 	// the delta of the max-min speeds
@@ -152,7 +156,7 @@ func Benchmark(threads int, multiplier float64) {
 	var criteria map[string]bool = make(map[string]bool)
 
 	// pass: the mean_median_delta is less than the standard deviation
-	criteria["1"] = math.Abs(mean_median_delta) < stdev
+	criteria["1"] = mean_median_delta < stdev
 
 	// pass: is the delta smaller than 10% of the max?
 	criteria["2"] = min_max_delta < max_ten_percent
@@ -207,9 +211,10 @@ func Benchmark(threads int, multiplier float64) {
 	fmt.Printf("---\n")
 
 	fmt.Printf("Threads: %d\n", threads)
+	fmt.Printf("Multiplier: %.2f\n", multiplier)
 	fmt.Printf("Speed: %.5f g/ms\n", toms(speed))
 	fmt.Printf("Games: %d\n", total_games)
-	fmt.Printf("Duration: %.0fs\n", float64(elapsed_time / ns))
+	fmt.Printf("Duration: %.1fs\n", float64(elapsed_time / ns))
 
 	fmt.Printf("---\n")
 
@@ -286,7 +291,7 @@ func math_round(f float64) int64 {
 func create_threads(threads int, channels *[](chan int)) {
 	for i := 0; i < threads; i++ {
 
-		progress := make(chan int, threads * 1024)
+		progress := make(chan int, 4096)
 		(*channels)[i] = progress
 
 		go func() {
