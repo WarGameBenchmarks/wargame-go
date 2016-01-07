@@ -53,7 +53,7 @@ func Benchmark(threads int) {
 	var total_games int64 = 1
 
 	var speed float64 = 0.0
-	var speed_v float64 = 0.0
+	// var speed_v float64 = 0.0
 
 	var maximum_speed float64
 	var minimum_speed float64
@@ -65,7 +65,6 @@ func Benchmark(threads int) {
 		elapsed_time = current_time - start_time
 
 		speed = float64(total_games) / float64(elapsed_time)
-		speed_v = speed * float64(ms)
 
 		if phase == 1 && elapsed_time >= prime_time {
 			phase = 2
@@ -101,10 +100,10 @@ func Benchmark(threads int) {
 
 			if phase == 1 {
 				fmt.Printf("\r%d. priming | et = %ds; g = %d; s = %.5f g/ms; \t",
-				phase, elapsed_time / ns, total_games, speed_v)
+				phase, elapsed_time / ns, total_games, speed * float64(ms))
 			} else if phase == 2 {
 				fmt.Printf("\r%d. sampling | et = %ds; g = %d; s = %.5f g/ms; t = %d; \t",
-				phase, elapsed_time / ns, total_games, speed_v, len(samples))
+				phase, elapsed_time / ns, total_games, speed * float64(ms), len(samples))
 			} else if phase == 3 {
 				phase = 4
 				// intentionally blank line
@@ -127,19 +126,20 @@ func Benchmark(threads int) {
 
 	// the signed value delta of mean and median
 	var mean_median_delta float64 = median - mean
+	var mm_lower, mm_upper float64 = math.Min(mean, median), math.Max(mean, median)
 
 	// the delta of the max-min speeds
 	var min_max_delta float64 = maximum_speed - minimum_speed
 	var max_ten_percent float64 = maximum_speed * ten_percent
 
 	// one_sigma is 1 standard deviation away from the mean
-	var one_sigma_lower float64 = (mean-stdev)*float64(ms)
-	var one_sigma_upper float64 = (mean+stdev)*float64(ms)
+	var one_sigma_lower float64 = (mean-stdev)
+	var one_sigma_upper float64 = (mean+stdev)
 	var one_sigma_delta float64 = one_sigma_upper - one_sigma_lower
 
 	// 99.9% confidence interval; how likely it is that the true mean lies within
-	var ci_lower float64 = (mean - (t_score * (stdev / math.Sqrt(float64(len(samples)))))) * float64(ms)
-	var ci_upper float64 = (mean + (t_score * (stdev / math.Sqrt(float64(len(samples)))))) * float64(ms)
+	var ci_lower float64 = (mean - (t_score * (stdev / math.Sqrt(float64(len(samples))))))
+	var ci_upper float64 = (mean + (t_score * (stdev / math.Sqrt(float64(len(samples))))))
 	var ci_delta float64 = ci_upper - ci_lower
 
 	// controversial section! points are given
@@ -156,10 +156,10 @@ func Benchmark(threads int) {
 	criteria["3"] = cov < one_percent
 
 	// pass: the final speed is within 1 stdev
-	criteria["4"] = one_sigma_lower < speed_v && speed_v < one_sigma_upper
+	criteria["4"] = one_sigma_lower < speed && speed < one_sigma_upper
 
 	// pass: the final speed is near the true mean; within the confidence interval
-	criteria["5"] = ci_lower < speed_v && speed_v < ci_upper
+	criteria["5"] = ci_lower < speed && speed < ci_upper
 
 	// only printing below
 	// 1. raw statisitics
@@ -171,23 +171,38 @@ func Benchmark(threads int) {
 	fmt.Printf("\n---\n")
 
 	fmt.Printf("Samples: %9d\n", len(samples))
-	fmt.Printf("Mean:\t %9.5f\n", mean * float64(ms))
-	fmt.Printf("Median:\t %9.5f\n", median * float64(ms))
-	fmt.Printf("S.D.:\t %9.5f\n", stdev * float64(ms))
+	fmt.Printf("Mean:\t %9.5f\n", toms(mean))
+	fmt.Printf("Median:\t %9.5f\n", toms(median))
+	fmt.Printf("S.D.:\t %9.5f\n", toms(stdev))
 	fmt.Printf("C.O.V.:\t %9.5f\n", cov)
 
 	fmt.Printf("---\n")
 
-	fmt.Printf("μ-Median:\t < %9.5f - %9.5f > Δ %9.5f\n", mean * float64(ms), median * float64(ms), mean_median_delta * float64(ms))
-	fmt.Printf("Min-Max:\t < %9.5f - %9.5f > Δ %9.5f\n", minimum_speed*float64(ms), maximum_speed*float64(ms), min_max_delta*float64(ms))
-	fmt.Printf("1-σ:\t\t < %9.5f - %9.5f > Δ %9.5f\n", one_sigma_lower, one_sigma_upper, one_sigma_delta)
-	fmt.Printf("99.9%% CI:\t < %9.5f - %9.5f > Δ %9.5f\n", ci_lower, ci_upper, ci_delta)
+	fmt.Printf("μ-Median:\t < %9.5f - %9.5f > Δ %9.5f\n",
+		toms(mm_lower),
+		toms(mm_upper),
+		toms(mean_median_delta))
+
+	fmt.Printf("Min-Max:\t < %9.5f - %9.5f > Δ %9.5f\n",
+		toms(minimum_speed),
+		toms(maximum_speed),
+		toms(min_max_delta))
+
+	fmt.Printf("1-σ:\t\t < %9.5f - %9.5f > Δ %9.5f\n",
+		toms(one_sigma_lower),
+		toms(one_sigma_upper),
+		toms(one_sigma_delta))
+
+	fmt.Printf("99.9%% CI:\t < %9.5f - %9.5f > Δ %9.5f\n",
+		toms(ci_lower),
+		toms(ci_upper),
+		toms(ci_delta))
 
 
 	fmt.Printf("---\n")
 
 	fmt.Printf("Threads: %d\n", threads)
-	fmt.Printf("Speed: %.5f g/ms\n", speed_v)
+	fmt.Printf("Speed: %.5f g/ms\n", toms(speed))
 	fmt.Printf("Games: %d\n", total_games)
 	fmt.Printf("Duration: %.0fs\n", float64(elapsed_time / ns))
 
@@ -198,8 +213,12 @@ func Benchmark(threads int) {
 
 	fmt.Printf("---\n")
 
-	fmt.Printf("Score: %d\n", math_round(speed_v))
+	fmt.Printf("Score: %d\n", math_round(toms(speed)))
 
+}
+
+func toms(f float64) float64 {
+	return f * float64(ms)
 }
 
 // Rank letter accepts a list of passed tests that
