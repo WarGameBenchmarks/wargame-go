@@ -33,7 +33,7 @@ func main() {
 			case err2 != nil:
 				fmt.Println(err2)
 			default:
-				threads = i1
+				threads = math.Abs(i1)
 				multiplier = math.Abs(i2)
 		}
 	} else if len(arguments) == 1 {
@@ -41,7 +41,7 @@ func main() {
 		if err != nil {
 			fmt.Println(err)
 		} else {
-			threads = i
+			threads = math.Abs(i)
 		}
 	}
 
