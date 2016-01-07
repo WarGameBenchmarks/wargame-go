@@ -107,11 +107,6 @@ func (c Card) Compare(o Card) int {
 // Deck represents a collection of cards.
 type Deck struct {
 	cards []Card
-	
-	// because Go uses a shared Rand source/generator,
-	// each game should use its own or at least a 
-	// gor specific s/g
-	generator *rand.Rand
 }
 
 // NewDeckEmpty will return a new empty deck of cards
@@ -123,28 +118,20 @@ func NewDeckEmpty() *Deck {
 
 // NewDeck will return a new deck of cards
 func NewDeck(cards []Card) *Deck {
-	source := rand.NewSource(time.Now().UnixNano())
-	generator := rand.New(source)
-
-	return &Deck{cards: cards, generator: generator}
+	return &Deck{cards: cards}
 }
 
-// NewDeckWithGenerator will return a new deck with a specific internal random
-// generator
-func NewDeckWithGenerator(cards []Card, g *rand.Rand) *Deck {
-	return &Deck{cards: cards, generator: g}	
-}
 
 // Fresh populates a deck with a `fresh` set of cards.
 func (d *Deck) Fresh() {
 	values := []Value{
-		Two, Three, Four, 
-		Five, Six, Seven, 
-		Eight, Nine, Ten, 
+		Two, Three, Four,
+		Five, Six, Seven,
+		Eight, Nine, Ten,
 		Jack, Queen, King,
 		Ace}
 	suits := []Suit{Clubs, Hearts, Diamonds, Spades}
-	
+
 	// slice, instead of an array
 	d.cards = make([]Card, 52)
 
@@ -167,15 +154,15 @@ func (d *Deck) Split() (*Deck,*Deck) {
 	part1 := d.cards[:h]
 	part2 := d.cards[h:]
 
-	return NewDeckWithGenerator(part1, d.generator), NewDeckWithGenerator(part2, d.generator)
+	return NewDeck(part1), NewDeck(part2)
 }
 
 // Shuffle randomizes a deck- a collection of cards.
-func (d *Deck) Shuffle() {
+func (d *Deck) Shuffle(generator *rand.Rand) {
 	cards := d.cards
 
 	for i := range cards {
-		j := d.generator.Intn(i+1)
+		j := generator.Intn(i+1)
 		cards[i], cards[j] = cards[j], cards[i]
 	}
 
@@ -229,4 +216,3 @@ func (d *Deck) GiveCards(other *Deck) {
 func init() {
 	rand.Seed(time.Now().UnixNano())
 }
-
