@@ -40,6 +40,7 @@ Clone this repository to your *Go workspace* and install it.
 ```
 mkdir -p ~/{go workspace}/src/github.com/ryanmr/wargame-go/
 go install
+```
 
 Alternatively, run this inside of the repository's directory:
 
