@@ -15,17 +15,17 @@ const ns int64 = 1000000000
 func prebench() int {
 
 	mg := 0
-	times, ntimes := 0, 20
+	times, ntimes := 0, 50
+	var duration int64 = ns/50;
+
+	source := rand.NewSource(time.Now().UnixNano())
+	generator := rand.New(source)
 
 	for times < ntimes {
 
-		var duration int64 = ns/10;
 		var start_time int64 = time.Now().UnixNano()
 		var elapsed_time int64 = 0;
 		var games int = 0;
-
-		source := rand.NewSource(time.Now().UnixNano())
-		generator := rand.New(source)
 
 		for elapsed_time <= duration {
 			Game(generator)
