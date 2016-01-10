@@ -12,11 +12,11 @@ import (
 const ms int64 = 1000000
 const ns int64 = 1000000000
 
-func prebench() int {
+func get_fixed_games() int {
 
 	mg := 0
-	times, ntimes := 0, 50
-	var duration int64 = ns/50;
+	times, ntimes := 0, 100
+	var duration int64 = ns/100
 
 	source := rand.NewSource(time.Now().UnixNano())
 	generator := rand.New(source)
@@ -34,8 +34,8 @@ func prebench() int {
 		}
 
 		if mg < games {
+			fmt.Println("g", mg, games)
 			mg = games
-			fmt.Println("-games", mg)
 		}
 		times++
 	}
@@ -48,7 +48,10 @@ func prebench() int {
 // and will eventually benchmark.
 func Benchmark(threads int, multiplier float64) {
 
-	var base int = prebench()
+	// in each thread, a fixed number of games will be run, and then it will communicate back
+	// to the primary thread
+	// hopefully this can decrease overheads
+	var base int = get_fixed_games()
 
 	progress_channels := make([](chan int), threads)
 
@@ -247,6 +250,7 @@ func Benchmark(threads int, multiplier float64) {
 	fmt.Printf("Threads: %d\n", threads)
 	fmt.Printf("Multiplier: %.2f\n", multiplier)
 	fmt.Printf("Speed: %.5f g/ms\n", toms(speed))
+	fmt.Printf("Base: %d\n", base)
 	fmt.Printf("Games: %d\n", total_games)
 	fmt.Printf("Duration: %.1fs\n", float64(elapsed_time / ns))
 
