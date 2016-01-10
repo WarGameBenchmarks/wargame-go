@@ -28,6 +28,7 @@ func prebench() int {
 		elapsed_time = time.Now().UnixNano() - start_time
 	}
 
+	fmt.Println("games", games)
 	return games
 }
 
