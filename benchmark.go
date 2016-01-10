@@ -14,7 +14,7 @@ const ns int64 = 1000000000
 
 func prebench() int {
 
-	var duration int64 = ns/200;
+	var duration int64 = ns/10;
 	var start_time int64 = time.Now().UnixNano()
 	var elapsed_time int64 = 0;
 	var games int = 0;
