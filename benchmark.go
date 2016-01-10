@@ -12,13 +12,34 @@ import (
 const ms int64 = 1000000
 const ns int64 = 1000000000
 
+func prebench() int {
+
+	var duration int64 = ns/200;
+	var start_time int64 = time.Now().UnixNano()
+	var elapsed_time int64 = 0;
+	var games int = 0;
+
+	source := rand.NewSource(time.Now().UnixNano())
+	generator := rand.New(source)
+
+	for elapsed_time <= duration {
+		Game(generator)
+		games++
+		elapsed_time = time.Now().UnixNano() - start_time
+	}
+
+	return games
+}
+
 // Benchmark accepts a number of threads,
 // and will eventually benchmark.
 func Benchmark(threads int, multiplier float64) {
 
+	var base int = prebench()
+
 	progress_channels := make([](chan int), threads)
 
-	create_threads(threads, &progress_channels)
+	create_threads(threads, base, &progress_channels)
 
 	// 1/15 of a second
 	const display_frequency int64 = ns/10
@@ -290,7 +311,7 @@ func math_round(f float64) int64 {
 // which will be populated with channels for each respective thread
 // spun up. Each thread runs a game loop, and upon completion of each game,
 // the thread sends through the progress channel.
-func create_threads(threads int, channels *[](chan int)) {
+func create_threads(threads int, base int, channels *[](chan int)) {
 	for i := 0; i < threads; i++ {
 
 		progress := make(chan int, 4096)
@@ -300,8 +321,12 @@ func create_threads(threads int, channels *[](chan int)) {
 			source := rand.NewSource(time.Now().UnixNano())
 			generator := rand.New(source)
 			for true {
-				Game(generator)
-				progress <- 1
+
+				for i := 0; i < base; i++ {
+					Game(generator)
+				}
+
+				progress <- base
 			}
 		}()
 
