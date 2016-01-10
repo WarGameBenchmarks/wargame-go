@@ -14,22 +14,34 @@ const ns int64 = 1000000000
 
 func prebench() int {
 
-	var duration int64 = ns/10;
-	var start_time int64 = time.Now().UnixNano()
-	var elapsed_time int64 = 0;
-	var games int = 0;
+	mg := 0
+	times, ntimes := 0, 20
 
-	source := rand.NewSource(time.Now().UnixNano())
-	generator := rand.New(source)
+	for times < ntimes {
 
-	for elapsed_time <= duration {
-		Game(generator)
-		games++
-		elapsed_time = time.Now().UnixNano() - start_time
+		var duration int64 = ns/10;
+		var start_time int64 = time.Now().UnixNano()
+		var elapsed_time int64 = 0;
+		var games int = 0;
+
+		source := rand.NewSource(time.Now().UnixNano())
+		generator := rand.New(source)
+
+		for elapsed_time <= duration {
+			Game(generator)
+			games++
+			elapsed_time = time.Now().UnixNano() - start_time
+		}
+
+		if mg < games {
+			mg = games
+			fmt.Println("-games", mg)
+		}
+		times++
 	}
 
-	fmt.Println("games", games)
-	return games
+	fmt.Println("games", mg)
+	return mg
 }
 
 // Benchmark accepts a number of threads,
