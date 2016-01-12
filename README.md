@@ -13,7 +13,7 @@ You can view the [changelog](changelog.md), that hopefully mentions major differ
 Legend
 ------
 
-You will definitely want to read WarGame's output &mdash; there are descriptions and discussions of the methods and statistics used are available in the [legend](legend.md).
+You will definitely want to read WarGame's output &mdash; there are descriptions and discussions of the methods and statistics used are available in the [legend](https://github.com/WarGameBenchmarks/wargame/blob/master/legend.md).
 
 How To Run
 ----------
